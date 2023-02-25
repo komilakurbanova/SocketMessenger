@@ -1,14 +1,9 @@
 #include <iostream>
-#include "clients.h"
 
 class Data {
 public:
     ~Data() = default;
-    const Client& GetClient() const {
-        return client;
-    } 
 private:
-    Client client;
 };
 
 template <class T>
@@ -24,10 +19,10 @@ bool Is(const std::shared_ptr<Data>& obj) {
 class Message : public Data {
 public:
     std::string_view GetContent() const {
-        return Content;
+        return Content_;
     }
 private:
-    std::string Content;
+    std::string Content_;
 };
 
 class Connect : public Data {

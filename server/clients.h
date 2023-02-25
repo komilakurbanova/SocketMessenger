@@ -4,19 +4,24 @@
 
 class Client {
 public:
-    Client(uint64_t id) : Id(id) {}
+    Client(uint64_t id, int socket) : Id(id), Socket(socket) {}
     uint64_t Id;
+    int Socket;
 };
+
+inline bool operator==(const Client& a, const Client& b) {
+    return a.Id == b.Id;
+} 
 
 class Clients {
 public:
-    void AddClient(Client& client) {
+    void AddClient(const Client& client) {
         ClientsLock.lock();
         data.push_back(client);
         ClientsLock.unlock();
     }
     
-    void RemoveClient(Client& client) { // mama ima cringe (когда-то кто-то перепишет 200%)
+    void RemoveClient(const Client& client) { // mama ima cringe (когда-то кто-то перепишет 200%)
         ClientsLock.lock(); 
         auto it = std::find(data.begin(), data.end(), client);
         if (it == data.end()) {
@@ -26,7 +31,7 @@ public:
         ClientsLock.unlock(); 
     }
     
-    std::mutex ClientsLock; // сейчас так, потом перепишу на свой лист с блокировкой одной ноды
-private:
+    std::mutex ClientsLock; // сейчас так, потом надо на что-то адекватное переписать
     std::list <Client> data;
+private:
 };
