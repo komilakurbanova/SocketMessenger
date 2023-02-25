@@ -1,9 +1,14 @@
 #include <iostream>
+#include "clients.h"
 
 class Data {
 public:
     ~Data() = default;
+    const Client& GetClient() const {
+        return client;
+    } 
 private:
+    Client client;
 };
 
 template <class T>
