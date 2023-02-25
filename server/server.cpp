@@ -28,6 +28,7 @@ TCPServer::TCPServer() {
 void TCPServer::ClientsLoop() {
     while (Status_ == Status::Active) {
         // std::cerr << "Clients Loop started\n";
+        std::vector <uint64_t> toDelete;
         Clients_.ClientsLock.lock(); // oh no cringe
         for (auto u: Clients_.data) {
             // Хуйня для неблокирующего чтения
@@ -48,15 +49,19 @@ void TCPServer::ClientsLoop() {
             } else if (bytes_received == 0)  { // Клиент отключился
                 std::cout << "[Disconnect] Client " + std::to_string(u.Id) + " has disconnected\n";
                 // чорт надо адекватно сделать))
-                Clients_.ClientsLock.unlock();
-                Clients_.RemoveClient(Client(u.Id, -1)); 
-                Clients_.ClientsLock.lock();
+                toDelete.push_back(u.Id);
             } else { // Клиент прислал данные
                 std::cerr << "[Message] From " + std::to_string(u.Id) + ": " + buffer + "\n";
                 // чета делать
             }
         }
         Clients_.ClientsLock.unlock();
+        
+        // delete all disconnected clients
+        for (auto u: toDelete) {
+            Clients_.RemoveClient(Client(u, -1));
+        }
+
         sleep(1);
     }
 }
