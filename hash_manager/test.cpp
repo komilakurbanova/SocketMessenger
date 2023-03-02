@@ -6,7 +6,15 @@ int main() {
     std::string salt1 = GenerateRandomSalt(salt_length);
     std::string salt2 = GenerateRandomSalt(salt_length);
     assert(salt1 != salt2);
-    
+
+    //Test that the salt only contains characters within the ASCII range of 0-255
+    salt_length = 16;
+    std::string salt = GenerateRandomSalt(salt_length);
+    for (char c : salt) {
+        assert(0 <= c);
+        assert(c <= 255);
+    }
+
     // Test that calling HashPassword twice with the same input password results in different salts and hashes
     std::string password = "MyPassword123";
     auto hash_salt_1 = HashPassword(password);
@@ -39,7 +47,7 @@ int main() {
     password = "MyPassword123";
     std::pair<std::string, std::string> result = HashPassword(password);
     std::string hash = result.first;
-    std::string salt = result.second;
+    salt = result.second;
     assert(hash.length() == 64); // Check that the hash length is correct
     assert(salt.length() == 16); // Check that the salt length is correct
     assert(CheckPassword(password, hash, salt)); // Check that the password can be checked with the hash and salt
