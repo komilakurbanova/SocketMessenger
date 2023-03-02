@@ -3,6 +3,7 @@
 #include <cstring>
 #include <string>
 #include <random>
+#include <cassert>
 #include <stdexcept>
 
 std::string GenerateRandomSalt(int length) {
@@ -17,49 +18,42 @@ std::string GenerateRandomSalt(int length) {
     return salt;
 }
 
-std::pair<std::string, std::string> PasswordHashWithSalt(const std::string &password) {
+std::string PasswordHashWithSalt(const std::string& password, const std::string& salt) {
+    if (!password.length()) {
+        throw std::runtime_error("Error hashing password: Empty password");
+    }
+    std::string tmp_password = salt + password;
+    unsigned char hash[SHA256_DIGEST_LENGTH]; // The hash value will be stored here
+    SHA256((unsigned char *) tmp_password.c_str(), tmp_password.length(), hash);
+    std::string hashed_password = "";
+    char buf[3];
+    for (int i = 0; i < SHA256_DIGEST_LENGTH; i++) {
+        snprintf(buf, 3, "%02x",
+                    hash[i]); // Convert each byte of the hash into a two-character hex string
+        hashed_password += buf;
+    }
+    return hashed_password;
+}
+
+std::pair<std::string, std::string> HashPassword(const std::string &password) {
     try {
-        const int salt_length = 16;
+        int salt_length = 16;
         const std::string &salt = GenerateRandomSalt(salt_length);
-        std::string saltedPassword = salt + password;
-        unsigned char hash[SHA256_DIGEST_LENGTH]; // The hash value will be stored here
-        SHA256((unsigned char *) saltedPassword.c_str(), saltedPassword.length(), hash);
-        std::string hashedPassword = "";
-        char buf[3];
-        for (int i = 0; i < SHA256_DIGEST_LENGTH; i++) {
-            snprintf(buf, 3, "%02x",
-                     hash[i]); // Convert each byte of the hash into a two-character hex string
-            hashedPassword += buf;
-        }
-        return std::make_pair(hashedPassword, salt);
+        std::string hash = PasswordHashWithSalt(password, salt);
+        return std::make_pair(hash, salt);
     }
     catch (const std::exception &ex) {
         throw std::runtime_error("Error hashing password: " + std::string(ex.what()));
     }
 }
 
-bool CheckPassword(const std::string &password, const std::string &storedHash, const std::string &salt) {
+bool CheckPassword(const std::string &password, const std::string &stored_hash, const std::string &salt) {
     try {
-        std::string hash = PasswordHashWithSalt(password).first;
-        return hash == storedHash;
+        std::string hash = PasswordHashWithSalt(password, salt);
+        return hash == stored_hash;
     }
     catch (const std::exception &ex) {
         throw std::runtime_error("Error checking password: " + std::string(ex.what()));
     }
 }
 
-// int main() {
-//     try {
-//         std::string password = "MyPassword123";
-//         std::pair<std::string, std::string> result = PasswordHashWithSalt(password);
-//         std::string hash = result.first;
-//         std::string salt = result.second;
-//         std::cout << "Salt: " << salt << std::endl;
-//         std::cout << "Hashed password: " << hash << std::endl;
-//         return 0;
-//     }
-//     catch (const std::exception &ex) {
-//         std::cerr << "Error: " << ex.what() << std::endl;
-//         return 1;
-//     }
-// }
