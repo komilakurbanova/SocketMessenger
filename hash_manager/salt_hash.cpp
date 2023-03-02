@@ -19,15 +19,16 @@ std::string GenerateRandomSalt(int length) {
 
 std::pair<std::string, std::string> PasswordHashWithSalt(const std::string &password) {
     try {
-        const std::string &salt = GenerateRandomSalt(16);
+        const int salt_length = 16;
+        const std::string &salt = GenerateRandomSalt(salt_length);
         std::string saltedPassword = salt + password;
-        unsigned char hash[SHA256_DIGEST_LENGTH]; // Хеш-значение будет сохранено здесь
+        unsigned char hash[SHA256_DIGEST_LENGTH]; // The hash value will be stored here
         SHA256((unsigned char *) saltedPassword.c_str(), saltedPassword.length(), hash);
         std::string hashedPassword = "";
         char buf[3];
         for (int i = 0; i < SHA256_DIGEST_LENGTH; i++) {
             snprintf(buf, 3, "%02x",
-                     hash[i]); // Конвертируем каждый байт хеша в двухсимвольную строку шестнадцатеричной цифры
+                     hash[i]); // Convert each byte of the hash into a two-character hex string
             hashedPassword += buf;
         }
         return std::make_pair(hashedPassword, salt);
@@ -47,18 +48,18 @@ bool CheckPassword(const std::string &password, const std::string &storedHash, c
     }
 }
 
-int main() {
-    try {
-        std::string password = "MyPassword123";
-        std::pair<std::string, std::string> result = PasswordHashWithSalt(password);
-        std::string hash = result.first;
-        std::string salt = result.second;
-        std::cout << "Salt: " << salt << std::endl;
-        std::cout << "Hashed password: " << hash << std::endl;
-        return 0;
-    }
-    catch (const std::exception &ex) {
-        std::cerr << "Error: " << ex.what() << std::endl;
-        return 1;
-    }
-}
+// int main() {
+//     try {
+//         std::string password = "MyPassword123";
+//         std::pair<std::string, std::string> result = PasswordHashWithSalt(password);
+//         std::string hash = result.first;
+//         std::string salt = result.second;
+//         std::cout << "Salt: " << salt << std::endl;
+//         std::cout << "Hashed password: " << hash << std::endl;
+//         return 0;
+//     }
+//     catch (const std::exception &ex) {
+//         std::cerr << "Error: " << ex.what() << std::endl;
+//         return 1;
+//     }
+// }
