@@ -1,25 +1,34 @@
 #pragma once
 
-#include <string>
+#include <iostream>
 #include <pqxx/pqxx>
-#include <stdexcept>
 
-class TDBManager {
+using namespace std;
+using namespace pqxx;
+
+class DBManager {
 protected:
-    bool PathIsValid(const std::string& db_name);
-
-    // Database connection object
-    pqxx::connection connection;
-
-    // Name of the table to manage
-    std::string table_name;
+    pqxx::connection* conn_;
+    string dbname_;
+    string user_;
+    string password_;
+    string host_;
+    string port_;
 
 public:
-    TDBManager(const std::string& db_name, const std::string& table_name);
+    DBManager(string dbname, string user, string password, string host = "localhost", string port = "5432");
+    ~DBManager();
 
-    // Function to post data to the database
-    void PostData(const std::string& data);
+    bool connect();
+    void disconnect();
 
-    // Function to get data from the database
-    std::string GetData();
+    bool execute(string sql_query);
+
+    pqxx::result execute_query(string sql_query);
+
+    template<typename T>
+    T get_value(string sql_query);
+
+    template<typename T>
+    vector<T> get_values(string sql_query);
 };

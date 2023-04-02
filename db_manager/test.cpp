@@ -1,29 +1,62 @@
-#include "gtest/gtest.h"
+#include <iostream>
 #include "db_manager.h"
 
-// Test case to ensure that the connection to the database is successful
-TEST(TDBManagerTest, ConnectsToDatabase) {
-    TDBManager db_manager("testdb", "testtable");
-    ASSERT_TRUE(db_manager.PathIsValid("testdb"));
-}
+using namespace std;
 
-// Test case to ensure that data can be posted to the database
-TEST(TDBManagerTest, PostsDataToDatabase) {
-    TDBManager db_manager("testdb", "testtable");
-    db_manager.PostData("Test Data");
-    std::string result = db_manager.GetData();
-    ASSERT_EQ(result, "Test Data\n");
-}
+int main() {
+    string dbname = "mydatabase";
+    string user = "myuser";
+    string password = "mypassword";
+    DBManager db(dbname, user, password);
 
-// Test case to ensure that data can be retrieved from the database
-TEST(TDBManagerTest, RetrievesDataFromDatabase) {
-    TDBManager db_manager("testdb", "testtable");
-    db_manager.PostData("Test Data");
-    std::string result = db_manager.GetData();
-    ASSERT_EQ(result, "Test Data\n");
-}
+    // Connect to database
+    if (!db.connect()) {
+        cerr << "Failed to connect to database!" << endl;
+        return 1;
+    }
 
-int main(int argc, char** argv) {
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
+    // Create a test table
+    string create_table_query = "CREATE TABLE IF NOT EXISTS test_table (id SERIAL PRIMARY KEY, name TEXT, age INTEGER)";
+    if (!db.execute(create_table_query)) {
+        cerr << "Failed to create test_table!" << endl;
+        return 1;
+    }
+
+    // Insert some test data
+    string insert_query = "INSERT INTO test_table (name, age) VALUES ('John', 30), ('Jane', 25)";
+    if (!db.execute(insert_query)) {
+        cerr << "Failed to insert test data!" << endl;
+        return 1;
+    }
+
+    // Retrieve data as vector of integers
+    string select_age_query = "SELECT age FROM test_table";
+    vector<int> ages = db.get_values<int>(select_age_query);
+    if (ages.empty()) {
+        cerr << "Failed to retrieve ages!" << endl;
+        return 1;
+    }
+    cout << "Ages: ";
+    for (int age : ages) {
+        cout << age << " ";
+    }
+    cout << endl;
+
+    // Retrieve data as vector of strings
+    string select_name_query = "SELECT name FROM test_table";
+    vector<string> names = db.get_values<string>(select_name_query);
+    if (names.empty()) {
+        cerr << "Failed to retrieve names!" << endl;
+        return 1;
+    }
+    cout << "Names: ";
+    for (string name : names) {
+        cout << name << " ";
+    }
+    cout << endl;
+
+    // Disconnect from database
+    db.disconnect();
+
+    return 0;
 }
