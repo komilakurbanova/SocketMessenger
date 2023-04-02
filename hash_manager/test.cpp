@@ -67,3 +67,7 @@ int main() {
     std::cout << "All tests passed!" << std::endl;
     return 0;
 }
+
+
+// Use: g++ -Wall -o a.out password_info.cpp test.cpp -lssl -lcrypto to run tests
+// ./a.out
