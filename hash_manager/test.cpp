@@ -69,5 +69,5 @@ int main() {
 }
 
 
-// Use: g++ -Wall -o a.out password_info.cpp test.cpp -lssl -lcrypto to run tests
-// ./a.out
+// Use: g++ -Wall -o a.out password_info.cpp test.cpp -lssl -lcrypto
+// ./a.out    to run tests
