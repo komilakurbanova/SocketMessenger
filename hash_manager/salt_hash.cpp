@@ -5,6 +5,7 @@
 #include <random>
 #include <cassert>
 #include <stdexcept>
+#include "password_info.h"
 
 std::string GenerateRandomSalt(int length) {
     std::random_device rd;
@@ -35,25 +36,24 @@ std::string PasswordHashWithSalt(const std::string& password, const std::string&
     return hashed_password;
 }
 
-std::pair<std::string, std::string> HashPassword(const std::string &password) {
+PasswordInfo HashPassword(const std::string &password) {
     try {
         int salt_length = 16;
         const std::string &salt = GenerateRandomSalt(salt_length);
         std::string hash = PasswordHashWithSalt(password, salt);
-        return std::make_pair(hash, salt);
+        return PasswordInfo(hash, salt);
     }
     catch (const std::exception &ex) {
         throw std::runtime_error("Error hashing password: " + std::string(ex.what()));
     }
 }
 
-bool CheckPassword(const std::string &password, const std::string &stored_hash, const std::string &salt) {
+bool CheckPassword(const std::string &password, const PasswordInfo &info) {
     try {
-        std::string hash = PasswordHashWithSalt(password, salt);
-        return hash == stored_hash;
+        std::string hash = PasswordHashWithSalt(password, info.getSalt());
+        return info.getHash() == hash;
     }
     catch (const std::exception &ex) {
         throw std::runtime_error("Error checking password: " + std::string(ex.what()));
     }
 }
-
