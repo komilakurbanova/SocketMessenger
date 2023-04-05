@@ -49,6 +49,7 @@ int choose_one_of_list(int max_rows, int max_cols, std::vector<std::string> &lis
                 if (choice < list_to_show.size() - 1) // указатель вниз
                     ++choice;
                 break;
+            case KEY_ENTER:
             case '\n':
                 return choice; // какой индекс из списка контактов выбрал
         }
@@ -57,7 +58,7 @@ int choose_one_of_list(int max_rows, int max_cols, std::vector<std::string> &lis
 
 int main() {
     std::vector<std::string> contacts;
-  // генерация случайного списка контактов
+    // генерация случайного списка контактов
     std::vector<std::string> first_names = {"Alice", "Bob", "Charlie", "David", "Emily", "Frank", "Grace", "Hannah", "Isaac", "Jack", "Kate", "Luke", "Megan", "Nathan", "Olivia", "Peter", "Quinn", "Rachel", "Sarah", "Tom", "Ursula", "Victoria", "Wendy", "Xander", "Yvette", "Zachary"};
     std::vector<std::string> last_names = {"Adams", "Brown", "Clark", "Davis", "Evans", "Franklin", "Garcia", "Hernandez", "Irwin", "Jackson", "Kim", "Lee", "Martin", "Nguyen", "Owens", "Patel", "Quinn", "Rodriguez", "Smith", "Taylor", "Upton", "Vargas", "Walker", "Xu", "Young", "Zhang"};
     std::random_device rd; // инициализация генератора случайных чисел
