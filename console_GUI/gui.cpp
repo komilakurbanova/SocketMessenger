@@ -22,7 +22,8 @@ int choose_one_of_list(int max_rows, int max_cols, std::vector<std::string> &lis
     int choice = 0; //Выбор пользователя
     while (true) {
         clear();
-        for (int i = choice; i < std::min(choice + num_rows, static_cast<int>(list_to_show.size())); i++) {
+        int first_row = std::max(0, choice - num_rows / 2);
+        for (int i = first_row; i < std::min(first_row + num_rows, static_cast<int>(list_to_show.size())); i++) {
             if (i == choice) // текущий совпадает с выбором пользователя
             {
                 attron(COLOR_PAIR(2));
@@ -42,12 +43,16 @@ int choose_one_of_list(int max_rows, int max_cols, std::vector<std::string> &lis
             case KEY_BACK:
                 return BACK;
             case KEY_UP:
-                if (choice) // указатель вверх
+                if (choice > 0) // указатель вверх
                     --choice;
+                if (choice < first_row) // прокрутка вверх
+                    first_row = choice;
                 break;
             case KEY_DOWN:
                 if (choice < list_to_show.size() - 1) // указатель вниз
                     ++choice;
+                if (choice >= first_row + num_rows) // прокрутка вниз
+                    first_row = choice - num_rows + 1;
                 break;
             case KEY_ENTER:
             case '\n':
@@ -55,6 +60,7 @@ int choose_one_of_list(int max_rows, int max_cols, std::vector<std::string> &lis
         }
     }
 }
+
 
 std::vector<std::string> signup();
 std::vector<std::string> login();
@@ -75,21 +81,16 @@ void index() {
         box(win, 0, 0);
         mvwprintw(win, 2, 2, "Choose button:");
         if (choice == 0) {
-            attron(COLOR_PAIR(2));
             mvwaddch(win, 4, 3, '>'); // выводим указатель
             mvwprintw(win, 4, 5, buttons[0].c_str());
-            attroff(COLOR_PAIR(2));
             mvwaddch(win, 5, 3, ' ');
             mvwprintw(win, 5, 5, buttons[1].c_str());
         }
         else {
             mvwaddch(win, 4, 3, ' ');
             mvwprintw(win, 4, 5, buttons[0].c_str());
-            attron(COLOR_PAIR(2));
             mvwaddch(win, 5, 3, '>'); // выводим указатель
             mvwprintw(win, 5, 5, buttons[1].c_str());
-            attroff(COLOR_PAIR(2));
-
         }
         refresh();
         wrefresh(win);
@@ -147,6 +148,7 @@ void choose_chat(const std::string &username) { // TODO что лучше при
     sleep(2);
     std::vector<std::string> contacts;
     // TODO вызов бд, получить чаты
+
     // генерация случайного списка контактов (заглушка)
     std::vector<std::string> first_names = {"Alice", "Bob", "Charlie", "David", "Emily", "Frank", "Grace", "Hannah", "Isaac", "Jack", "Kate", "Luke", "Megan", "Nathan", "Olivia", "Peter", "Quinn", "Rachel", "Sarah", "Tom", "Ursula", "Victoria", "Wendy", "Xander", "Yvette", "Zachary"};
     std::vector<std::string> last_names = {"Adams", "Brown", "Clark", "Davis", "Evans", "Franklin", "Garcia", "Hernandez", "Irwin", "Jackson", "Kim", "Lee", "Martin", "Nguyen", "Owens", "Patel", "Quinn", "Rodriguez", "Smith", "Taylor", "Upton", "Vargas", "Walker", "Xu", "Young", "Zhang"};
@@ -154,7 +156,7 @@ void choose_chat(const std::string &username) { // TODO что лучше при
     std::mt19937 rng(rd()); // используем Mersenne Twister 19937 как генератор
     std::uniform_int_distribution<int> first_name_dist(0, first_names.size() - 1);
     std::uniform_int_distribution<int> last_name_dist(0, last_names.size() - 1);
-    for (int i = 0; i < 100; ++i) {
+    for (int i = 0; i < 30; ++i) {
         std::string full_name = first_names[first_name_dist(rng)] + " " + last_names[last_name_dist(rng)];
         contacts.push_back(full_name);
     }
@@ -182,6 +184,7 @@ std::vector<std::string> login() {
     std::vector<std::string> field_values;
     clear();
     start_color();
+    init_pair(3, COLOR_CYAN, COLOR_BLACK);
     int max_rows, max_cols;
     getmaxyx(stdscr, max_rows, max_cols);
     // Рисуем рамку вокруг формы
@@ -196,6 +199,8 @@ std::vector<std::string> login() {
         // Создаем окно для поля ввода
         WINDOW *field_win = newwin(1, 20, max_rows / 2 - 3 + i, max_cols / 2 + 2);
         box(field_win, 0, 0);
+        wattron(field_win, A_BOLD);
+        wattron(field_win, COLOR_PAIR(3));
         wrefresh(field_win);
         // Получаем от пользователя данные и сохраняем в массив символов
         char value[20];
@@ -230,6 +235,7 @@ std::vector<std::string> signup() {
     std::vector<std::string> field_values;
     clear();
     start_color();
+    init_pair(3, COLOR_CYAN, COLOR_BLACK);
     int max_rows, max_cols;
     getmaxyx(stdscr, max_rows, max_cols);
     // Рисуем рамку вокруг формы
@@ -241,10 +247,12 @@ std::vector<std::string> signup() {
     for (int i = 0; i < fields.size(); ++i) {
         mvprintw(max_rows / 2 - 3 + i, max_cols / 2 - 18, "%s: ", fields[i].c_str());
         refresh();
-        // Создаем окно для поля ввода
         WINDOW *field_win = newwin(1, 20, max_rows / 2 - 3 + i, max_cols / 2 + 2);
         box(field_win, 0, 0);
+        wattron(field_win, A_BOLD);
+        wattron(field_win, COLOR_PAIR(3));
         wrefresh(field_win);
+
         // Получаем от пользователя данные и сохраняем в массив символов
         char value[20];
         wmove(field_win, 0, 1);
@@ -276,7 +284,7 @@ std::vector<std::string> signup() {
 int main() {
     // Инициализация ncurses и экрана
     initscr();
-
+    //choose_chat("Nikita");
     index();
 
     endwin();
