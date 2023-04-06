@@ -13,10 +13,15 @@ enum {
     KEY_ESC = 27,
     LOGIN = 0,
     SIGNUP = 1,
+    NEW = 2,
+    OPEN = 3,
+    DELETE = 4,
 };
 
+void index();
+
 // выбор одного варианта из списка, вернет либо индекс выбранного, либо флаги возврата и выхода
-int choose_one_of_list(int max_rows, int max_cols, std::vector<std::string> &list_to_show) {
+int choose_one_of_list(int max_rows, int max_cols, const std::vector<std::string> &list_to_show) {
     init_pair(2, COLOR_BLUE, COLOR_WHITE); // цвет выделения
     int num_rows = std::min(max_rows, static_cast<int>(list_to_show.size()));
     int choice = 0; //Выбор пользователя
@@ -61,97 +66,119 @@ int choose_one_of_list(int max_rows, int max_cols, std::vector<std::string> &lis
     }
 }
 
-
-std::vector<std::string> signup();
-std::vector<std::string> login();
-void choose_chat(const std::string &username);
-
-void index() {
-    cbreak();
-    noecho();
-    keypad(stdscr, TRUE);
-    clear();
-    refresh();
-    std::vector<std::string> buttons = {"Login", "Sign Up"};
-    WINDOW *win = newwin(10, 30, 5, 5);
+int choose_system_call(const std::vector<std::string> &buttons) {
+    WINDOW *win = newwin(7 + static_cast<int>(buttons.size()), 30, 5, 5);
     init_pair(2, COLOR_BLUE, COLOR_WHITE);
     int choice = 0;
     while (true) {
         clear();
         box(win, 0, 0);
-        mvwprintw(win, 2, 2, "Choose button:");
-        if (choice == 0) {
-            mvwaddch(win, 4, 3, '>'); // выводим указатель
-            mvwprintw(win, 4, 5, buttons[0].c_str());
-            mvwaddch(win, 5, 3, ' ');
-            mvwprintw(win, 5, 5, buttons[1].c_str());
-        }
-        else {
-            mvwaddch(win, 4, 3, ' ');
-            mvwprintw(win, 4, 5, buttons[0].c_str());
-            mvwaddch(win, 5, 3, '>'); // выводим указатель
-            mvwprintw(win, 5, 5, buttons[1].c_str());
+        mvwprintw(win, 2, 4, "Choose button:");
+        for (int i = 0; i < buttons.size(); ++i) {
+            if (i == choice) {
+                mvwaddch(win, 4 + i, 5, '>'); // выводим указатель
+            } else {
+                mvwaddch(win, 4 + i, 5, ' ');
+            }
+            mvwprintw(win, 4 + i, 7, buttons[i].c_str());
         }
         refresh();
         wrefresh(win);
         int ch = getch();
-        if (ch == KEY_ESC){ // закрыть программу
+        if (ch == KEY_ESC) { // закрыть программу
             delwin(win);
             endwin();
             exit(0);
-        } else if (ch == KEY_UP) {
-            if (choice) // указатель вверх
-                --choice;
-        } else if (ch == KEY_DOWN) {
-            if (choice < buttons.size() - 1) // указатель вниз
-                ++choice;
+        } else if (ch == KEY_BACK) {
+            index();
+        } else if (ch == KEY_UP && choice > 0) {
+            --choice; // указатель вверх
+        } else if (ch == KEY_DOWN && choice < buttons.size() - 1) {
+            ++choice; // указатель вниз
         } else if (ch == KEY_ENTER || ch == '\n') {
             delwin(win);
             break; // какой индекс из списка контактов выбрал
         }
     }
-    if (choice == SIGNUP) {
-        auto field_values = signup();
-        if (field_values.empty()) {
-            delwin(win);
-            endwin();
-            exit(0);
-        }
-        choose_chat(field_values[1]);
-        // TODO вызов бд и добавление пользователя, тут отловить наличие кого-то с таким юзернеймом
-        // TODO тут мне нужно получить список имеющихся чатов (пусть пока это все зареганные), но пока рандомно нагенерю
-//        for (auto e : field_values) {
-//            std::cout << e << std::endl;
-//        }
-    } else if (choice == LOGIN) {
-        auto field_values = login();
-        if (field_values.empty()) {
-            delwin(win);
-            endwin();
-            exit(0);
-        }
-        choose_chat(field_values[0]);
-        // TODO вызов бд и проверка на корректность
-        // TODO тут мне нужно получить список имеющихся чатов (пусть пока это все зареганные), но пока рандомно нагенерю
-    }
+    delwin(win);
+    return choice;
 }
+
+std::vector<std::string>
+registration_forms(int diff, const std::string &button, const std::vector<std::string> &fields) {
+    std::vector<std::string> field_values;
+    clear();
+    start_color();
+    init_pair(3, COLOR_CYAN, COLOR_BLACK);
+    int max_rows, max_cols;
+    getmaxyx(stdscr, max_rows, max_cols);
+    // Рисуем рамку вокруг формы
+    WINDOW *form_win = newwin(6 + diff, 50, max_rows / 2 - 5, max_cols / 2 - 20);
+    box(form_win, 0, 0);
+    refresh();
+    wrefresh(form_win);
+    // Выводим поля ввода и метки к ним
+    for (int i = 0; i < fields.size(); ++i) {
+        mvprintw(max_rows / 2 - 3 + i, max_cols / 2 - 18, "%s: ", fields[i].c_str());
+        refresh();
+        // Создаем окно для поля ввода
+        WINDOW *field_win = newwin(1, 20, max_rows / 2 - 3 + i, max_cols / 2 + 2);
+        box(field_win, 0, 0);
+        wattron(field_win, A_BOLD);
+        wattron(field_win, COLOR_PAIR(3));
+        wrefresh(field_win);
+        // Получаем от пользователя данные и сохраняем в массив символов
+        char value[20];
+        wmove(field_win, 0, 1);
+        echo();
+        wgetstr(field_win, value);
+        noecho();
+        field_values.push_back(value);
+    }
+    // Создаем кнопку
+    WINDOW *button_win = newwin(3, 15, max_rows / 2 + diff, max_cols / 2 - 2);
+    box(button_win, 0, 0);
+    mvwprintw(button_win, 1, 4, button.c_str());
+    wrefresh(button_win);
+    // Ожидаем, пока пользователь нажмет на кнопку
+    int ch = getch();
+    if (ch == KEY_ESC) {
+        delwin(button_win);
+        endwin();
+        exit(0);
+    } else if (ch == KEY_BACK) {
+        index();
+    }
+    while (ch != KEY_ENTER && ch != '\n') {
+        ch = getch();
+    }
+    endwin();
+    return field_values;
+}
+
+std::vector<std::string> signup();
+
+std::vector<std::string> login();
+
+void home(const std::string &username);
 
 void choose_chat(const std::string &username) { // TODO что лучше принимать? Какой-то класс пользователя мб
     clear();
     int max_rows, max_cols;
     getmaxyx(stdscr, max_rows, max_cols);
-    std::string greeting = "Welcome, " + username + "!";
-    attron(A_BOLD);
-    mvprintw(10, max_cols / 2 - greeting.size() / 2, "%s\n\n", greeting.c_str());
-    attroff(A_BOLD);
-    refresh();
-    sleep(2);
     std::vector<std::string> contacts;
+
     // TODO вызов бд, получить чаты
 
     // генерация случайного списка контактов (заглушка)
-    std::vector<std::string> first_names = {"Alice", "Bob", "Charlie", "David", "Emily", "Frank", "Grace", "Hannah", "Isaac", "Jack", "Kate", "Luke", "Megan", "Nathan", "Olivia", "Peter", "Quinn", "Rachel", "Sarah", "Tom", "Ursula", "Victoria", "Wendy", "Xander", "Yvette", "Zachary"};
-    std::vector<std::string> last_names = {"Adams", "Brown", "Clark", "Davis", "Evans", "Franklin", "Garcia", "Hernandez", "Irwin", "Jackson", "Kim", "Lee", "Martin", "Nguyen", "Owens", "Patel", "Quinn", "Rodriguez", "Smith", "Taylor", "Upton", "Vargas", "Walker", "Xu", "Young", "Zhang"};
+    std::vector<std::string> first_names = {"Alice", "Bob", "Charlie", "David", "Emily", "Frank", "Grace", "Hannah",
+                                            "Isaac", "Jack", "Kate", "Luke", "Megan", "Nathan", "Olivia", "Peter",
+                                            "Quinn", "Rachel", "Sarah", "Tom", "Ursula", "Victoria", "Wendy", "Xander",
+                                            "Yvette", "Zachary"};
+    std::vector<std::string> last_names = {"Adams", "Brown", "Clark", "Davis", "Evans", "Franklin", "Garcia",
+                                           "Hernandez", "Irwin", "Jackson", "Kim", "Lee", "Martin", "Nguyen", "Owens",
+                                           "Patel", "Quinn", "Rodriguez", "Smith", "Taylor", "Upton", "Vargas",
+                                           "Walker", "Xu", "Young", "Zhang"};
     std::random_device rd; // инициализация генератора случайных чисел
     std::mt19937 rng(rd()); // используем Mersenne Twister 19937 как генератор
     std::uniform_int_distribution<int> first_name_dist(0, first_names.size() - 1);
@@ -176,109 +203,88 @@ void choose_chat(const std::string &username) { // TODO что лучше при
         getch();
     }
     endwin();
-    // TODO возвращать id чата или зайти в чат
+    // TODO возвращать id чата из бд!!!
+}
+
+void index() {
+    cbreak();
+    noecho();
+    keypad(stdscr, TRUE);
+    clear();
+    refresh();
+    std::vector<std::string> buttons = {"Login", "Sign Up"};
+
+    int choice = LOGIN + choose_system_call(buttons);
+
+    std::string username = "";
+    if (choice == SIGNUP) {
+        auto field_values = signup();
+        if (field_values.empty()) {
+            endwin();
+            exit(0);
+        }
+        username = field_values[1];
+        // TODO вызов бд и добавление пользователя, тут отловить наличие кого-то с таким юзернеймом
+//        for (auto e : field_values) {
+//            std::cout << e << std::endl;
+//        }
+
+    } else if (choice == LOGIN) {
+        auto field_values = login();
+        if (field_values.empty()) {
+            endwin();
+            exit(0);
+        }
+        username = field_values[0];
+        // TODO вызов бд и проверка на корректность входа
+    } else {
+        exit(1);
+    }
+    clear();
+    refresh();
+    int max_rows, max_cols;
+    getmaxyx(stdscr, max_rows, max_cols);
+    std::string greeting = "Welcome, " + username + "!"; // TODO подтягивать из бд name по username
+    attron(A_BOLD);
+    mvprintw(10, max_cols / 2 - greeting.size() / 2, "%s\n\n", greeting.c_str());
+    attroff(A_BOLD);
+    refresh();
+    sleep(2);
+    home(username);
+}
+
+void home(const std::string &username) {
+    clear();
+    std::vector<std::string> buttons = {"New chat", "Open chat", "Delete chat"};
+    int choice = NEW + choose_system_call(buttons);
+
+    int chat_id; // TODO или строка
+    if (choice == NEW) {
+        // chat_id = new chat id
+    } else if (choice == OPEN || choice == DELETE) {
+        choose_chat(username); // chat_id = ...
+    } else {
+        exit(1);
+    }
+    if (choice == DELETE) {
+        // удалить из бд
+        home(username);
+    } else {
+        // вызвать из бд все сообщения в хронологическом порядке
+        // TODO обработчик и вывод сообщений на экран
+        return;
+    }
+
+    // TODO вызов бд и добавление пользователя, тут отловить наличие кого-то с таким юзернеймом
+    // TODO тут мне нужно получить список имеющихся чатов (пусть пока это все зареганные), но пока рандомно нагенерю
 }
 
 std::vector<std::string> login() {
-    std::vector<std::string> fields = {"Username", "Password"};
-    std::vector<std::string> field_values;
-    clear();
-    start_color();
-    init_pair(3, COLOR_CYAN, COLOR_BLACK);
-    int max_rows, max_cols;
-    getmaxyx(stdscr, max_rows, max_cols);
-    // Рисуем рамку вокруг формы
-    WINDOW *form_win = newwin(6, 50, max_rows / 2 - 5, max_cols / 2 - 20);
-    box(form_win, 0, 0);
-    refresh();
-    wrefresh(form_win);
-    // Выводим поля ввода и метки к ним
-    for (int i = 0; i < fields.size(); ++i) {
-        mvprintw(max_rows / 2 - 3 + i, max_cols / 2 - 18, "%s: ", fields[i].c_str());
-        refresh();
-        // Создаем окно для поля ввода
-        WINDOW *field_win = newwin(1, 20, max_rows / 2 - 3 + i, max_cols / 2 + 2);
-        box(field_win, 0, 0);
-        wattron(field_win, A_BOLD);
-        wattron(field_win, COLOR_PAIR(3));
-        wrefresh(field_win);
-        // Получаем от пользователя данные и сохраняем в массив символов
-        char value[20];
-        wmove(field_win, 0, 1);
-        echo();
-        wgetstr(field_win, value);
-        noecho();
-        field_values.push_back(value);
-    }
-    // Создаем кнопку «Sign Up»
-    WINDOW *button_win = newwin(3, 15, max_rows / 2, max_cols / 2 - 2);
-    box(button_win, 0, 0);
-    mvwprintw(button_win, 1, 4, "Log In");
-    wrefresh(button_win);
-    // Ожидаем, пока пользователь нажмет на кнопку
-    int ch = getch();
-    if (ch == KEY_ESC) {
-        delwin(button_win);
-        endwin();
-    } else if (ch == KEY_BACK) {
-        index();
-    }
-    while (ch != KEY_ENTER && ch != '\n') {
-        ch = getch();
-    }
-    endwin();
-    return field_values;
+    return registration_forms(0, "Login", {"Username", "Password"});
 }
 
 std::vector<std::string> signup() {
-    std::vector<std::string> fields = {"Name", "Username", "Password"};
-    std::vector<std::string> field_values;
-    clear();
-    start_color();
-    init_pair(3, COLOR_CYAN, COLOR_BLACK);
-    int max_rows, max_cols;
-    getmaxyx(stdscr, max_rows, max_cols);
-    // Рисуем рамку вокруг формы
-    WINDOW *form_win = newwin(10, 50, max_rows / 2 - 5, max_cols / 2 - 20);
-    box(form_win, 0, 0);
-    refresh();
-    wrefresh(form_win);
-    // Выводим поля ввода и метки к ним
-    for (int i = 0; i < fields.size(); ++i) {
-        mvprintw(max_rows / 2 - 3 + i, max_cols / 2 - 18, "%s: ", fields[i].c_str());
-        refresh();
-        WINDOW *field_win = newwin(1, 20, max_rows / 2 - 3 + i, max_cols / 2 + 2);
-        box(field_win, 0, 0);
-        wattron(field_win, A_BOLD);
-        wattron(field_win, COLOR_PAIR(3));
-        wrefresh(field_win);
-
-        // Получаем от пользователя данные и сохраняем в массив символов
-        char value[20];
-        wmove(field_win, 0, 1);
-        echo();
-        wgetstr(field_win, value);
-        noecho();
-        field_values.push_back(value);
-    }
-    // Создаем кнопку «Sign Up»
-    WINDOW *button_win = newwin(3, 15, max_rows / 2 + 4, max_cols / 2 - 2);
-    box(button_win, 0, 0);
-    mvwprintw(button_win, 1, 4, "Sign Up");
-    wrefresh(button_win);
-    // Ожидаем, пока пользователь нажмет на кнопку
-    int ch = getch();
-    if (ch == KEY_ESC) {
-        delwin(button_win);
-        endwin();
-    } else if (ch == KEY_BACK) {
-        index();
-    }
-    while (ch != KEY_ENTER && ch != '\n') {
-        ch = getch();
-    }
-    endwin();
-    return field_values;
+    return registration_forms(4, "Sign Up", {"Name", "Username", "Password"});
 }
 
 int main() {
