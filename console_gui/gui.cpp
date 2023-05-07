@@ -164,7 +164,7 @@ void home(const std::string &username);
 
 std::vector<std::string> generate_contact_names() {
     // генерация случайного списка контактов (заглушка)
-  
+    std::vector<std::string> contacts;
     std::vector<std::string> first_names = {"Alice", "Bob", "Charlie", "David", "Emily", "Frank", "Grace", "Hannah",
                                             "Isaac", "Jack", "Kate", "Luke", "Megan", "Nathan", "Olivia", "Peter",
                                             "Quinn", "Rachel", "Sarah", "Tom", "Ursula", "Victoria", "Wendy", "Xander",
@@ -188,12 +188,10 @@ void choose_chat(const std::string &username) { // TODO что лучше при
     clear();
     int max_rows, max_cols;
     getmaxyx(stdscr, max_rows, max_cols);
-    std::vector<std::string> contacts;
-
     // TODO вызов бд, получить чаты
 
     auto contacts = generate_contact_names();
-  
+
     curs_set(0);
     keypad(stdscr, true);
     int return_value = choose_one_of_list(max_rows, max_cols, contacts);
@@ -218,6 +216,8 @@ void index() {
     noecho();
     keypad(stdscr, TRUE);
     clear();
+    start_color();
+    init_pair(3, COLOR_WHITE, COLOR_BLACK);
     refresh();
     std::vector<std::string> buttons = {"Login", "Sign Up"};
 
