@@ -5,6 +5,7 @@
 #include <vector>
 #include <iostream>
 #include <random>
+#include <ctype.h>
 
 enum {
     ESC = -2,
@@ -104,6 +105,30 @@ int choose_system_call(const std::vector<std::string> &buttons) {
     return choice;
 }
 
+std::vector<std::string> signup();
+
+std::vector<std::string> login();
+
+void home(const std::string &username);
+
+bool validate_input_from_extra_chars(
+        char *value) { // TODO как проверять ввод специальных символов, которые читаются как несколько?
+    size_t len = strlen(value);
+    size_t cnt = 0;
+    while (cnt < len) {
+        if (!isgraph(value[cnt])) {
+            for (auto j = cnt; j < len - 1; ++j) {
+                value[j] = value[j + 1];
+            }
+            value[len - 1] = '\0';
+            --len;
+        } else {
+            ++cnt;
+        }
+    }
+    return len;
+}
+
 std::vector<std::string>
 registration_forms(int diff, const std::string &button, const std::vector<std::string> &fields) {
     std::vector<std::string> field_values;
@@ -128,12 +153,30 @@ registration_forms(int diff, const std::string &button, const std::vector<std::s
         wattron(field_win, COLOR_PAIR(3));
         wrefresh(field_win);
         // Получаем от пользователя данные и сохраняем в массив символов
-        char value[20];
+        char value[20]; // ограничение длины фиксировано, можно изменить
         wmove(field_win, 0, 1);
         echo();
         wgetstr(field_win, value);
         noecho();
-        field_values.push_back(value);
+        bool valid = validate_input_from_extra_chars(value);
+        if (valid) {
+            // Строка содержит хотя бы один печатный символ
+            field_values.push_back(value);
+        } else {
+            // Строка пуста
+            clear();
+            refresh();
+            int max_rows, max_cols;
+            getmaxyx(stdscr, max_rows, max_cols);
+            std::string greeting =
+                    "You entered empty string in " + fields[i] + "!"; // TODO подтягивать из бд name по username
+            attron(A_BOLD);
+            mvprintw(10, max_cols / 2 - greeting.size() / 2, "%s\n\n", greeting.c_str());
+            attroff(A_BOLD);
+            refresh();
+            sleep(2);
+            return registration_forms(4, "Sign Up", {"Name", "Username", "Password"});
+        }
     }
     // Создаем кнопку
     WINDOW *button_win = newwin(3, 15, max_rows / 2 + diff, max_cols / 2 - 2);
@@ -155,12 +198,6 @@ registration_forms(int diff, const std::string &button, const std::vector<std::s
     endwin();
     return field_values;
 }
-
-std::vector<std::string> signup();
-
-std::vector<std::string> login();
-
-void home(const std::string &username);
 
 std::vector<std::string> generate_contact_names() {
     // генерация случайного списка контактов (заглушка)
@@ -232,7 +269,7 @@ void index() {
         }
         username = field_values[1];
         // TODO вызов бд и добавление пользователя, тут отловить наличие кого-то с таким юзернеймом
-//        for (auto e : field_values) {
+//        for (auto e: field_values) {
 //            std::cout << e << std::endl;
 //        }
 
