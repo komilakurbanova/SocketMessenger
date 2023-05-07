@@ -111,7 +111,7 @@ std::vector<std::string> login();
 
 void home(const std::string &username);
 
-bool validate_input_from_extra_chars(
+bool is_sanitizes_input_not_empty(
         char *value) { // TODO как проверять ввод специальных символов, которые читаются как несколько?
     size_t len = strlen(value);
     size_t cnt = 0;
@@ -158,9 +158,8 @@ registration_forms(int diff, const std::string &button, const std::vector<std::s
         echo();
         wgetstr(field_win, value);
         noecho();
-        bool valid = validate_input_from_extra_chars(value);
-        if (valid) {
-            // Строка содержит хотя бы один печатный символ
+        if (is_sanitizes_input_not_empty(value)) {
+            // Строка содержит хотя бы один печатный символ, строка уже sanitized
             field_values.push_back(value);
         } else {
             // Строка пуста
