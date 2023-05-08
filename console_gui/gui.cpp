@@ -17,6 +17,7 @@ enum {
     NEW = 2,
     OPEN = 3,
     DELETE = 4,
+    BUFSIZE = 20,
 };
 
 void index();
@@ -111,6 +112,18 @@ std::vector<std::string> login();
 
 void home(const std::string &username);
 
+void send_message(const std::string &message) {
+    clear();
+    refresh();
+    int max_rows, max_cols;
+    getmaxyx(stdscr, max_rows, max_cols);
+    attron(A_BOLD);
+    mvprintw(10, max_cols / 2 - message.size() / 2, "%s\n\n", message.c_str());
+    attroff(A_BOLD);
+    refresh();
+    sleep(2);
+}
+
 bool is_sanitizes_input_not_empty(
         char *value) { // TODO как проверять ввод специальных символов, которые читаются как несколько?
     size_t len = strlen(value);
@@ -138,7 +151,7 @@ registration_forms(int diff, const std::string &button, const std::vector<std::s
     int max_rows, max_cols;
     getmaxyx(stdscr, max_rows, max_cols);
     // Рисуем рамку вокруг формы
-    WINDOW *form_win = newwin(6 + diff, 50, max_rows / 2 - 5, max_cols / 2 - 20);
+    WINDOW *form_win = newwin(6 + diff, 50, max_rows / 2 - 5, max_cols / 2 - BUFSIZE);
     box(form_win, 0, 0);
     refresh();
     wrefresh(form_win);
@@ -147,34 +160,27 @@ registration_forms(int diff, const std::string &button, const std::vector<std::s
         mvprintw(max_rows / 2 - 3 + i, max_cols / 2 - 18, "%s: ", fields[i].c_str());
         refresh();
         // Создаем окно для поля ввода
-        WINDOW *field_win = newwin(1, 20, max_rows / 2 - 3 + i, max_cols / 2 + 2);
+        WINDOW *field_win = newwin(1, BUFSIZE, max_rows / 2 - 3 + i, max_cols / 2 + 2);
         box(field_win, 0, 0);
         wattron(field_win, A_BOLD);
         wattron(field_win, COLOR_PAIR(3));
         wrefresh(field_win);
+
         // Получаем от пользователя данные и сохраняем в массив символов
-        char value[20]; // ограничение длины фиксировано, можно изменить
+        char *value = (char *) calloc(BUFSIZE, sizeof(value)); // ограничение длины фиксировано, можно изменить
         wmove(field_win, 0, 1);
         echo();
         wgetstr(field_win, value);
         noecho();
+
         if (is_sanitizes_input_not_empty(value)) {
-            // Строка содержит хотя бы один печатный символ, строка уже sanitized
+            // Строка содержит хотя бы один печатный символ, строка теперь sanitized
             field_values.push_back(value);
         } else {
             // Строка пуста
-            clear();
-            refresh();
-            int max_rows, max_cols;
-            getmaxyx(stdscr, max_rows, max_cols);
-            std::string greeting =
-                    "You entered empty string in " + fields[i] + "!"; // TODO подтягивать из бд name по username
-            attron(A_BOLD);
-            mvprintw(10, max_cols / 2 - greeting.size() / 2, "%s\n\n", greeting.c_str());
-            attroff(A_BOLD);
-            refresh();
-            sleep(2);
-            return registration_forms(4, "Sign Up", {"Name", "Username", "Password"});
+            free(value);
+            send_message("You entered empty string in " + fields[i] + "!");
+            return registration_forms(diff, button, fields);
         }
     }
     // Создаем кнопку
@@ -281,18 +287,10 @@ void index() {
         username = field_values[0];
         // TODO вызов бд и проверка на корректность входа
     } else {
+        endwin();
         exit(1);
     }
-    clear();
-    refresh();
-    int max_rows, max_cols;
-    getmaxyx(stdscr, max_rows, max_cols);
-    std::string greeting = "Welcome, " + username + "!"; // TODO подтягивать из бд name по username
-    attron(A_BOLD);
-    mvprintw(10, max_cols / 2 - greeting.size() / 2, "%s\n\n", greeting.c_str());
-    attroff(A_BOLD);
-    refresh();
-    sleep(2);
+    send_message("Welcome, " + username + "!");  // TODO подтягивать из бд name по username
     home(username);
 }
 
@@ -307,6 +305,7 @@ void home(const std::string &username) {
     } else if (choice == OPEN || choice == DELETE) {
         choose_chat(username); // chat_id = ...
     } else {
+        endwin();
         exit(1);
     }
     if (choice == DELETE) {
@@ -317,9 +316,7 @@ void home(const std::string &username) {
         // TODO обработчик и вывод сообщений на экран
         return;
     }
-
     // TODO вызов бд и добавление пользователя, тут отловить наличие кого-то с таким юзернеймом
-    // TODO тут мне нужно получить список имеющихся чатов (пусть пока это все зареганные), но пока рандомно нагенерю
 }
 
 std::vector<std::string> login() {
