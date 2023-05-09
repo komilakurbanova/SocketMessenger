@@ -13,7 +13,9 @@
 ## Запуск local версии
 
 `cmake .`
+
 `make`
+
 `cd bin && ./db_manager`
 
 ## Запуск Docker версии (TODO)
