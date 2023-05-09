@@ -6,7 +6,7 @@
 #include <iostream>
 #include <random>
 #include <ctype.h>
-#include "SocketMessenger/db_manager/db_manager.h"
+#include "../db_manager/db_manager.h"
 
 enum {
     ESC = -2,
