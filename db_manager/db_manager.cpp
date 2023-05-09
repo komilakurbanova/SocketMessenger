@@ -1,5 +1,6 @@
 #include "db_manager.h"
 #include <stdexcept>
+#include <string>
 
 // class DBManager : public IDBManager {
 // public:
@@ -124,7 +125,6 @@
 // }
 
 bool LocalDBManager::addUser(const std::string& username,
-                             const std::string& name,
                              const std::string& password_hash,
                              const std::string& password_salt) {
     if (users_.count(username)) {
@@ -133,7 +133,6 @@ bool LocalDBManager::addUser(const std::string& username,
 
     User new_user;
     new_user.username = username,
-    new_user.name = name,
     new_user.password_hash = password_hash,
     new_user.password_salt = password_salt,
 
@@ -215,13 +214,6 @@ std::string LocalDBManager::getPasswordSalt(const std::string& username) const {
     return "";
 }
 
-std::string LocalDBManager::getName(const std::string& username) const {
-    if (users_.count(username)) {
-        return users_.at(username).name;
-    }
-    return "";
-}
-
 std::vector<std::string> LocalDBManager::getChatsByUsername(const std::string& username) const {
     std::vector<std::string> chats;
     for (const auto& [chat_id, chat] : chats_) {
@@ -232,12 +224,20 @@ std::vector<std::string> LocalDBManager::getChatsByUsername(const std::string& u
     return chats;
 }
 
-std::vector<std::pair<std::string, std::string>> LocalDBManager::getUserList() const {
-    std::vector<std::pair<std::string, std::string>> user_list;
+std::vector<std::string> LocalDBManager::getUserList() const {
+    std::vector<std::string> user_list;
     for (const auto& [username, user] : users_) {
-        user_list.emplace_back(username, user.name);
+        user_list.emplace_back(username);
     }
     return user_list;
+}
+
+std::vector<std::pair<std::string, std::string>> LocalDBManager::getChatIdAndNameList() const {
+    std::vector<std::pair<std::string, std::string>> chat_id_and_name_list;
+    for (const auto& [chat_id, chat] : chats_) {
+        chat_id_and_name_list.emplace_back(chat_id, chat.chat_name);
+    }
+    return chat_id_and_name_list;
 }
 
 std::vector<std::string> LocalDBManager::getMessagesByChat(const std::string& chat_id) const {

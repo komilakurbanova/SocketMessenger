@@ -51,6 +51,11 @@ int main() {
         std::cout << "Username: " << name << std::endl;
     }
 
+    std::vector<std::pair<std::string, std::string>> chat_list = db_manager.getChatIdAndNameList();
+    for (const auto& [id, name] : chat_list) {
+        std::cout << "ChatID: " << id << " ChatName: " << name << std::endl;
+    }
+
     std::string chat_id = "2";
     std::string sender_name = username1;
     std::string content = "Test message content";
