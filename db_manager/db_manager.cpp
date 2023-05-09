@@ -124,14 +124,16 @@
 // }
 
 bool LocalDBManager::addUser(const std::string& username,
+                             const std::string& name,
                              const std::string& password_hash,
                              const std::string& password_salt) {
-    if (users_.contains(username)) {
+    if (users_.count(username)) {
         return false;
     }
 
     User new_user;
     new_user.username = username,
+    new_user.name = name,
     new_user.password_hash = password_hash,
     new_user.password_salt = password_salt,
 
@@ -140,7 +142,7 @@ bool LocalDBManager::addUser(const std::string& username,
 }
 
 bool LocalDBManager::removeUser(const std::string& username) {
-    if (!users_.contains(username)) {
+    if (!users_.count(username)) {
         return false;
     }
 
@@ -159,7 +161,7 @@ bool LocalDBManager::removeUser(const std::string& username) {
 bool LocalDBManager::createChat(const std::string& first_username,
                                 const std::string& second_username,
                                 const std::string& chat_name) {
-    if (!users_.contains(first_username) || !users_.contains(second_username)) {
+    if (!users_.count(first_username) || !users_.count(second_username)) {
         return false;
     }
 
@@ -174,7 +176,7 @@ bool LocalDBManager::createChat(const std::string& first_username,
 }
 
 bool LocalDBManager::removeChat(const std::string& chat_id) {
-    if (!chats_.contains(chat_id)) {
+    if (!chats_.count(chat_id)) {
         return false;
     }
 
@@ -186,12 +188,12 @@ bool LocalDBManager::addMessage(const std::string& chat_id,
                                 const std::string& sender_name,
                                 const std::string& content,
                                 const std::string& timestamp) {
-    if (!chats_.contains(chat_id)) {
+    if (!chats_.count(chat_id)) {
         return false;
     }
 
     Chat& chat = chats_[chat_id];
-    if (!chat.members.contains(sender_name)) {
+    if (!chat.members.count(sender_name)) {
         return false;
     }
 
@@ -200,15 +202,22 @@ bool LocalDBManager::addMessage(const std::string& chat_id,
 }
 
 std::string LocalDBManager::getPasswordHash(const std::string& username) const {
-    if (users_.contains(username)) {
+    if (users_.count(username)) {
         return users_.at(username).password_hash;
     }
     return "";
 }
 
 std::string LocalDBManager::getPasswordSalt(const std::string& username) const {
-    if (users_.contains(username)) {
+    if (users_.count(username)) {
         return users_.at(username).password_salt;
+    }
+    return "";
+}
+
+std::string LocalDBManager::getName(const std::string& username) const {
+    if (users_.count(username)) {
+        return users_.at(username).name;
     }
     return "";
 }
@@ -216,23 +225,23 @@ std::string LocalDBManager::getPasswordSalt(const std::string& username) const {
 std::vector<std::string> LocalDBManager::getChatsByUsername(const std::string& username) const {
     std::vector<std::string> chats;
     for (const auto& [chat_id, chat] : chats_) {
-        if (chat.members.contains(username)) {
+        if (chat.members.count(username)) {
             chats.push_back(chat.chat_id);
         }
     }
     return chats;
 }
 
-std::vector<std::string> LocalDBManager::getUserList() const {
-    std::vector<std::string> user_list;
+std::vector<std::pair<std::string, std::string>> LocalDBManager::getUserList() const {
+    std::vector<std::pair<std::string, std::string>> user_list;
     for (const auto& [username, user] : users_) {
-        user_list.emplace_back(username);
+        user_list.emplace_back(username, user.name);
     }
     return user_list;
 }
 
 std::vector<std::string> LocalDBManager::getMessagesByChat(const std::string& chat_id) const {
-    if (!chats_.contains(chat_id)) {
+    if (!chats_.count(chat_id)) {
         return {};
     }
     const Chat& chat = chats_.at(chat_id);
