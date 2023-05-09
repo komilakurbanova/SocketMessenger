@@ -6,6 +6,7 @@
 #include <iostream>
 #include <random>
 #include <ctype.h>
+#include "SocketMessenger/db_manager/db_manager.h"
 
 enum {
     ESC = -2,
@@ -20,10 +21,13 @@ enum {
     BUFSIZE = 20,
 };
 
+const std::string connection_string = "dbname=messenger_db user=admin password=root host=db";
+LocalDBManager db;
+
 void index();
 
 // выбор одного варианта из списка, вернет либо индекс выбранного, либо флаги возврата и выхода
-int choose_one_of_list(int max_rows, int max_cols, const std::vector<std::string> &list_to_show) {
+int choose_one_of_list(int max_rows, int max_cols, std::vector<std::pair<std::string, std::string>> &list_to_show) {
     init_pair(2, COLOR_BLUE, COLOR_WHITE); // цвет выделения
     int num_rows = std::min(max_rows, static_cast<int>(list_to_show.size()));
     int choice = 0; //Выбор пользователя
@@ -35,11 +39,11 @@ int choose_one_of_list(int max_rows, int max_cols, const std::vector<std::string
             {
                 attron(COLOR_PAIR(2));
                 addch('>'); // выводим указатель
-                printw("%s\n", list_to_show[i].c_str());
+                printw("%s\n", (list_to_show[i].second + " (" + list_to_show[i].first + ")").c_str());
                 attroff(COLOR_PAIR(2));
             } else {
                 addch(' ');
-                printw("%s\n", list_to_show[i].c_str());
+                printw("%s\n", (list_to_show[i].second + " (" + list_to_show[i].first + ")").c_str());
             }
         }
         refresh();
@@ -200,6 +204,7 @@ registration_forms(int diff, const std::string &button, const std::vector<std::s
     while (ch != KEY_ENTER && ch != '\n') {
         ch = getch();
     }
+
     endwin();
     return field_values;
 }
@@ -226,13 +231,15 @@ std::vector<std::string> generate_contact_names() {
     return contacts;
 }
 
-void choose_chat(const std::string &username) { // TODO что лучше принимать? Какой-то класс пользователя мб
+void choose_chat(const std::string &username) {
     clear();
     int max_rows, max_cols;
     getmaxyx(stdscr, max_rows, max_cols);
-    // TODO вызов бд, получить чаты
 
-    auto contacts = generate_contact_names();
+    // вызов бд, получить чаты
+    auto contacts = db.getUserList();
+
+    //auto contacts = generate_contact_names();
 
     curs_set(0);
     keypad(stdscr, true);
@@ -242,9 +249,9 @@ void choose_chat(const std::string &username) { // TODO что лучше при
         index();
     } else {
         clear();
-        printw("%s\n", std::to_string(return_value).c_str());
         attron(A_BOLD);
-        printw("%s\n", contacts[return_value].c_str());
+        printw("%s\n", contacts[return_value].second.c_str());
+        // TODO тут уже выбрали чат, просто показали, какой чат вообще
         attroff(A_BOLD);
         refresh();
         getch();
@@ -320,19 +327,69 @@ void home(const std::string &username) {
 }
 
 std::vector<std::string> login() {
-    return registration_forms(0, "Login", {"Username", "Password"});
+    auto field_values = registration_forms(0, "Login", {"Username", "Password"});
+    const std::string username = field_values[0];
+    if (db.getName(username).size() == 0) {
+        send_message("This user does not exist");
+        login();
+    }
+    if (db.getPasswordHash(username) != field_values[1]) {
+        send_message("Wrong password. Try again");
+        login();
+    }
+    return field_values;
 }
 
 std::vector<std::string> signup() {
-    return registration_forms(4, "Sign Up", {"Name", "Username", "Password"});
+    auto field_values = registration_forms(4, "Sign Up", {"Name", "Username", "Password"});
+    if (db.addUser(field_values[1], field_values[0], field_values[2], "blabla salt")) {
+        return field_values;
+    }
+    return {};
 }
 
 int main() {
+
+    std::string username1 = "testuser1";
+    std::string name1 = "Loki";
+    std::string password_hash1 = "passwordhash1";
+    std::string password_salt1 = "salt1";
+    if (db.addUser(username1, name1, password_hash1, password_salt1)) {
+        std::cout << "User 1 added successfully." << std::endl;
+    } else {
+        std::cout << "Failed to add user 1." << std::endl;
+    }
     // Инициализация ncurses и экрана
     initscr();
     //choose_chat("Some-strange-named-person");
     index();
 
     endwin();
+
+    std::string username2 = "testuser2";
+    std::string name2 = "Nikita";
+    std::string password_hash2 = "passwordhash2";
+    std::string password_salt2 = "salt2";
+    if (db.addUser(username2, name2, password_hash2, password_salt2)) {
+        std::cout << "User 2 added successfully." << std::endl;
+    } else {
+        std::cout << "Failed to add user 2." << std::endl;
+    }
+
+    std::string chat_name = "Test Chat";
+    if (db.createChat(username1, username2, chat_name)) {
+        std::cout << "Chat created successfully." << std::endl;
+    } else {
+        std::cout << "Failed to create chat." << std::endl;
+    }
+
+    if (db.getPasswordHash(username1) == password_hash1 && db.getPasswordSalt(username1) == password_salt1) {
+        std::cout << "Welcome, " << db.getName(username1) << std::endl;
+    }
+    auto users = db.getUserList();
+    for (auto e : users) {
+        std::cout << e.second << "  (" <<e.first << ")" << std::endl;
+    }
+
     return 0;
 }
