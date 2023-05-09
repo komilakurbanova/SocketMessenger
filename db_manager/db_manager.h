@@ -5,20 +5,39 @@
 #include <set>
 #include <iostream>
 
+struct User {
+    std::string username;
+    std::string name;
+    std::string password_hash;
+    std::string password_salt;
+};
+
+struct Chat {
+    std::string chat_id;
+    std::string chat_name;
+    std::set<std::string> members;
+    std::vector<std::string> messages;
+};
+
 class IDBManager {
 public:
-    virtual bool addUser(const std::string& username, const std::string& password_hash, const std::string& password_salt) = 0;
+    virtual bool addUser(const std::string& username, const std::string& name,
+                         const std::string& password_hash, const std::string& password_salt) = 0;
     virtual bool removeUser(const std::string& username) = 0;
-    virtual bool createChat(const std::string& first_username, const std::string& second_username, const std::string& chat_name) = 0;
+    virtual std::string createChat(const std::string& first_username, const std::string& second_username, const std::string& chat_name) = 0;
     virtual bool removeChat(const std::string& chat_id) = 0;
     virtual bool addMessage(const std::string& chat_id, const std::string& sender_name, const std::string& content, const std::string& timestamp) = 0;
 
     virtual std::string getPasswordHash(const std::string& username) const = 0;
     virtual std::string getPasswordSalt(const std::string& username) const = 0;
-    virtual std::vector<std::string> getChatsByUsername(const std::string& username) const = 0;
-    virtual std::vector<std::string> getUserList() const = 0;
-    virtual std::vector<std::pair<std::string, std::string>> getChatIdAndNameList() const = 0;
-    virtual std::vector<std::string> getMessagesByChat(const std::string& chat_id) const = 0;
+    virtual std::string getName(const std::string& username) const = 0;
+    virtual std::vector<std::string> getChatIdsByUsername(const std::string& username) const = 0;
+    virtual std::vector<std::string> getUsernamesList() const = 0;
+
+    virtual std::vector<std::string> getChatIdList() const = 0;
+    virtual std::string getChatName(const std::string& chat_id) const = 0;
+    virtual std::set<std::string> getChatMembers(const std::string& chat_id) const = 0;
+    virtual std::vector<std::string> getChatMessages(const std::string& chat_id) const = 0;
 };
 
 // class DBManager : public IDBManager {
@@ -36,35 +55,28 @@ public:
 //     pqxx::connection connection_;
 // };
 
-struct User {
-    std::string username;
-    std::string password_hash;
-    std::string password_salt;
-};
-
-struct Chat {
-    std::string chat_id;
-    std::string chat_name;
-    std::set<std::string> members;
-    std::vector<std::string> messages;
-};
-
 class LocalDBManager : public IDBManager {
 public:
     LocalDBManager() {};
 
-    bool addUser(const std::string& username, const std::string& password_hash, const std::string& password_salt) override;
+    bool addUser(const std::string& username, const std::string& name,
+                 const std::string& password_hash, const std::string& password_salt) override;
     bool removeUser(const std::string& username) override;
-    bool createChat(const std::string& first_username, const std::string& second_username, const std::string& chat_name) override;
+    // returns chat_id
+    std::string createChat(const std::string& first_username, const std::string& second_username, const std::string& chat_name) override;
     bool removeChat(const std::string& chat_id) override;
     bool addMessage(const std::string& chat_id, const std::string& sender_name, const std::string& content, const std::string& timestamp) override;
 
     std::string getPasswordHash(const std::string& username) const override;
     std::string getPasswordSalt(const std::string& username) const override;
-    std::vector<std::string> getChatsByUsername(const std::string& username) const override;
-    std::vector<std::string> getUserList() const override;
-    std::vector<std::pair<std::string, std::string>> getChatIdAndNameList() const override;
-    std::vector<std::string> getMessagesByChat(const std::string& chat_id) const override;
+    std::string getName(const std::string& username) const override;
+    std::vector<std::string> getChatIdsByUsername(const std::string& username) const override;
+    std::vector<std::string> getUsernamesList() const override;
+
+    std::vector<std::string> getChatIdList() const override;
+    std::string getChatName(const std::string& chat_id) const override;
+    std::set<std::string> getChatMembers(const std::string& chat_id) const override;
+    std::vector<std::string> getChatMessages(const std::string& chat_id) const override;
 
 protected:
     int next_chat_id_ = 1;
