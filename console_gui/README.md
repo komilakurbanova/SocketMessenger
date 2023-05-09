@@ -6,7 +6,7 @@
 
 ## Компиляция
 
-`g++ -std=c++11 gui.cpp -o gui.out -lncurses` и после `./gui.out`
+`g++ -std=c++17 console_gui/gui.cpp db_manager/db_manager.cpp -o gui.out -lncurses` и после `./gui.out`
 
 ## Список возможных команд
 
