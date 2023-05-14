@@ -4,7 +4,6 @@
 #include <cstring>
 #include <vector>
 #include <iostream>
-#include <random>
 #include <ctype.h>
 #include "../db_manager/db_manager.h"
 
@@ -43,8 +42,7 @@ int choose_one_of_list(int max_rows, int max_cols, std::vector<std::string> &lis
                 addch('>'); // выводим указатель
                 if (mode == CHOOSE_CHAT) {
                     printw("%s\n", (db.getChatName(list_to_show[i])).c_str());
-                }
-                else if (mode == NEW_CHAT) {
+                } else if (mode == NEW_CHAT) {
                     printw("%s\n", (db.getName(list_to_show[i])).c_str());
                 }
                 attroff(COLOR_PAIR(2));
@@ -52,8 +50,7 @@ int choose_one_of_list(int max_rows, int max_cols, std::vector<std::string> &lis
                 addch(' ');
                 if (mode == CHOOSE_CHAT) {
                     printw("%s\n", (db.getChatName(list_to_show[i])).c_str());
-                }
-                else if (mode == NEW_CHAT) {
+                } else if (mode == NEW_CHAT) {
                     printw("%s\n", (db.getName(list_to_show[i])).c_str());
                 }
                 attroff(COLOR_PAIR(2));
@@ -80,7 +77,7 @@ int choose_one_of_list(int max_rows, int max_cols, std::vector<std::string> &lis
                 break;
             case KEY_ENTER:
             case '\n':
-                return choice; // какой индекс из списка контактов выбрал
+                return choice; // какой индекс из списка выбран
         }
     }
 }
@@ -116,7 +113,7 @@ int choose_system_call(const std::vector<std::string> &buttons) {
             ++choice; // указатель вниз
         } else if (ch == KEY_ENTER || ch == '\n') {
             delwin(win);
-            break; // какой индекс из списка контактов выбрал
+            break;
         }
     }
     delwin(win);
@@ -142,7 +139,7 @@ void send_message(const std::string &message) {
 }
 
 bool is_sanitizes_input_not_empty(
-        char *value) { // TODO как проверять ввод специальных символов, которые читаются как несколько?
+        char *value) { // TODO как проверять ввод специальных символов, которые читаются как несколько? (никак)
     size_t len = strlen(value);
     size_t cnt = 0;
     while (cnt < len) {
@@ -222,72 +219,49 @@ registration_forms(int diff, const std::string &button, const std::vector<std::s
     return field_values;
 }
 
-std::vector<std::string> generate_contact_names() {
-    // генерация случайного списка контактов (заглушка)
-    std::vector<std::string> contacts;
-    std::vector<std::string> first_names = {"Alice", "Bob", "Charlie", "David", "Emily", "Frank", "Grace", "Hannah",
-                                            "Isaac", "Jack", "Kate", "Luke", "Megan", "Nathan", "Olivia", "Peter",
-                                            "Quinn", "Rachel", "Sarah", "Tom", "Ursula", "Victoria", "Wendy", "Xander",
-                                            "Yvette", "Zachary"};
-    std::vector<std::string> last_names = {"Adams", "Brown", "Clark", "Davis", "Evans", "Franklin", "Garcia",
-                                           "Hernandez", "Irwin", "Jackson", "Kim", "Lee", "Martin", "Nguyen", "Owens",
-                                           "Patel", "Quinn", "Rodriguez", "Smith", "Taylor", "Upton", "Vargas",
-                                           "Walker", "Xu", "Young", "Zhang"};
-    std::random_device rd; // инициализация генератора случайных чисел
-    std::mt19937 rng(rd()); // используем Mersenne Twister 19937 как генератор
-    std::uniform_int_distribution<int> first_name_dist(0, first_names.size() - 1);
-    std::uniform_int_distribution<int> last_name_dist(0, last_names.size() - 1);
-    for (int i = 0; i < 30; ++i) {
-        std::string full_name = first_names[first_name_dist(rng)] + " " + last_names[last_name_dist(rng)];
-        contacts.push_back(full_name);
-    }
-    return contacts;
-}
-
-void choose_chat(const std::string &username) {
+std::string choose_chat(const std::string &username) {
     clear();
     int max_rows, max_cols;
     getmaxyx(stdscr, max_rows, max_cols);
-
     // вызов бд, получить чаты
+    std::string chat_id = "";
     auto chat_ids = db.getChatIdsByUsername(username);
-    //auto chat_ids = generate_contact_names();
     curs_set(0);
     keypad(stdscr, true);
-    int idx = choose_one_of_list(max_rows, max_cols, chat_ids, CHOOSE_CHAT);
+    int idx = choose_one_of_list(max_rows, max_cols, chat_ids,
+                                 CHOOSE_CHAT); // индекс выбранного из всего списка, либо команды
     if (idx == ESC) {
         endwin();
         exit(0);
-    }
-    else if (idx == BACK) {
+    } else if (idx == BACK) {
         refresh();
         index();
     } else {
         clear();
         attron(A_BOLD);
-        printw("%s\n", db.getChatName(chat_ids[idx]).c_str());
+        chat_id = chat_ids[idx];
+        printw("%s\n", db.getChatName(chat_id).c_str());
         // TODO тут уже выбрали чат, просто показали, какой чат вообще
         attroff(A_BOLD);
         refresh();
         getch();
     }
     endwin();
-    // TODO возвращать id чата из бд!!!
+    return chat_id;
 }
 
 
-void create_chat(const std::string &username) {
+std::string create_chat(const std::string &username) {
     clear();
     int max_rows, max_cols;
     getmaxyx(stdscr, max_rows, max_cols);
-
+    std::string chat_id = "";
     auto users = db.getUsernamesList();
     int idx = choose_one_of_list(max_rows, max_cols, users, NEW_CHAT);
     if (idx == ESC) {
         endwin();
         exit(0);
-    }
-    else if (idx == BACK) {
+    } else if (idx == BACK) {
         refresh();
         index();
     } else {
@@ -295,14 +269,17 @@ void create_chat(const std::string &username) {
         if (chosen_username == username) {
             send_message("Choose someone else, you cannot create a chat with yourself");
             create_chat(username);
-            return;
+            return chat_id;
         }
-        if (db.createChat(username, chosen_username, db.getName(chosen_username)).size() > 0) { //TODO придумать имя чату, пока просто имя собеседнику
+        chat_id = db.createChat(username, chosen_username,
+                                db.getName(chosen_username)); //TODO придумать имя чату, пока это просто имя собеседника
+        if (chat_id.size() > 0) {
             send_message("Chat " + db.getName(chosen_username) + " was created!");
         } else {
             send_message("Oops, something went wrong!");
         }
     }
+    return chat_id;
 }
 
 void index() {
@@ -325,6 +302,7 @@ void index() {
             exit(0);
         }
         username = field_values[1];
+        send_message("Welcome, " + db.getName(username) + "!");
     } else if (choice == LOGIN) {
         auto field_values = login();
         if (field_values.empty()) {
@@ -332,42 +310,34 @@ void index() {
             exit(0);
         }
         username = field_values[0];
-        // вызов бд и проверка на корректность входа
+        send_message("Hello, " + db.getName(username) + "!");
     } else {
         endwin();
         exit(1);
     }
-    send_message("Welcome, " + db.getName(username) + "!");
     home(username);
 }
 
-void home(const std::string &username) { // TODO тут смерть и путаница, потом разберу
+void home(const std::string &username) { // TODO важно! проверить логику
     clear();
-    int max_rows, max_cols;
-    getmaxyx(stdscr, max_rows, max_cols);
-
     std::vector<std::string> buttons = {"New chat", "Open chat", "Delete chat"};
     int choice = NEW + choose_system_call(buttons);
-
+    std::string chat_id = "";
     if (choice == NEW) {
-        create_chat(username);
-        // chat_id = new chat id
-
+        chat_id = create_chat(username);
     } else if (choice == OPEN || choice == DELETE) {
-        choose_chat(username); // chat_id = ...
+        chat_id = choose_chat(username);
     } else {
         endwin();
         exit(1);
     }
     if (choice == DELETE) {
-        // удалить из бд
+        // TODO удалить из бд
         home(username);
     } else {
-        // вызвать из бд все сообщения в хронологическом порядке
-        // TODO обработчик и вывод сообщений на экран
+        // TODO открыть чат, начать слушать порт
         return;
     }
-    // TODO вызов бд и добавление пользователя, тут отловить наличие кого-то с таким юзернеймом
 }
 
 std::vector<std::string> login() {
