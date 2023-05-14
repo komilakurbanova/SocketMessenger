@@ -37,26 +37,42 @@ int choose_one_of_list(int max_rows, int max_cols, std::vector<std::string> &lis
         clear();
         int first_row = std::max(0, choice - num_rows / 2);
         for (int i = first_row; i < std::min(first_row + num_rows, static_cast<int>(list_to_show.size())); i++) {
-            // TODO отправить серверу
-            // ProtocolPacket info = {OperationType::GET_CHAT_NAME, {chat_id, "", "", ""}};
-            // TODO получить имя от сервера
-            std::string option = db.getChatName(list_to_show[i]);
             if (i == choice) // текущий совпадает с выбором пользователя
             {
                 attron(COLOR_PAIR(2));
                 addch('>'); // выводим указатель
                 if (mode == CHOOSE_CHAT) {
-                    printw("%s\n", option.c_str());
+                    // TODO отправить серверу
+                    // ProtocolPacket info = {OperationType::GET_CHAT_NAME, {list_to_show[i], "", "", ""}};
+                    // TODO получить имя от сервера
+                    
+                    std::string chat_name = db.getChatName(list_to_show[i]);
+                    printw("%s\n", chat_name.c_str());
                 } else if (mode == NEW_CHAT) {
-                    printw("%s\n", option.c_str());
+                    // TODO отправить серверу
+                    // ProtocolPacket info = {OperationType::GET_NAME, {list_to_show[i], "", "", ""}};
+                    // TODO получить имя от сервера
+                    
+                    std::string name = db.getName(list_to_show[i]);
+                    printw("%s\n", name.c_str());
                 }
                 attroff(COLOR_PAIR(2));
             } else {
                 addch(' ');
                 if (mode == CHOOSE_CHAT) {
-                    printw("%s\n", option.c_str());
+                    // TODO отправить серверу
+                    // ProtocolPacket info = {OperationType::GET_CHAT_NAME, {list_to_show[i], "", "", ""}};
+                    // TODO получить имя от сервера
+                    
+                    std::string chat_name = db.getChatName(list_to_show[i]);
+                    printw("%s\n", chat_name.c_str());
                 } else if (mode == NEW_CHAT) {
-                    printw("%s\n", option.c_str());
+                    // TODO отправить серверу
+                    // ProtocolPacket info = {OperationType::GET_NAME, {list_to_show[i], "", "", ""}};
+                    // TODO получить имя от сервера
+                    
+                    std::string name = db.getName(list_to_show[i]);
+                    printw("%s\n", name.c_str());
                 }
                 attroff(COLOR_PAIR(2));
             }
