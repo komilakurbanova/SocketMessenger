@@ -1,3 +1,4 @@
+#include <atomic>
 #include <string>
 
 enum class OperationType {
@@ -16,6 +17,29 @@ enum class OperationType {
     GET_CHAT_MEMBERS,
     GET_CHAT_MESSAGES
 };
+
+bool IsUserOperation(OperationType operationType) {
+    return operationType == OperationType::ADD_USER
+        || operationType == OperationType::REMOVE_USER
+        || operationType == OperationType::GET_USER_PASSWORD_HASH
+        || operationType == OperationType::GET_USER_PASSWORD_SALT
+        || operationType == OperationType::GET_USER_NAME
+        || operationType == OperationType::GET_USER_CHAT_IDS
+        || operationType == OperationType::GET_ALL_USERS;
+}
+
+bool IsChatOperation(OperationType operationType) {
+    return operationType == OperationType::CREATE_CHAT
+        || operationType == OperationType::REMOVE_CHAT
+        || operationType == OperationType::GET_ALL_CHATS
+        || operationType == OperationType::GET_CHAT_NAME
+        || operationType == OperationType::GET_CHAT_MEMBERS
+        || operationType == OperationType::GET_CHAT_MESSAGES;
+}
+
+bool IsMessageOperation(OperationType operationType) {
+    return operationType == OperationType::ADD_MESSAGE;
+}
 
 struct User {
     std::string username;
@@ -44,6 +68,7 @@ struct OperationData {
 };
 
 struct ProtocolPacket {
+    std::atomic_uint64_t uniqProtoId;
     OperationType operationType;
     OperationData operationData;
 
