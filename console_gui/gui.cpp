@@ -6,7 +6,7 @@
 #include <iostream>
 #include <ctype.h>
 #include "../db_manager/db_manager.h"
-#include "../protocol/data_protocol.h"
+// #include "../protocol/data_protocol.h"
 
 enum Flags {
     ESC = -2,
@@ -18,9 +18,11 @@ enum Flags {
     NEW = 2,
     OPEN = 3,
     DELETE = 4,
-    BUFSIZE = 20,
+    BUFSIZE = 20, // максимальная длина пароля/логина/имени
     CHOOSE_CHAT = 0,
     NEW_CHAT = 1,
+    MAXSIZE = 1024, // максимальная длина сообщения
+    RAWS = 20, // максимальное число строк в чатах
 };
 
 const std::string connection_string = "dbname=messenger_db user=admin password=root host=db";
@@ -36,23 +38,18 @@ int choose_one_of_list(int max_rows, int max_cols, std::vector<std::string> &lis
     while (true) {
         clear();
         int first_row = std::max(0, choice - num_rows / 2);
-        for (int i = first_row; i < std::min(first_row + num_rows, static_cast<int>(list_to_show.size())); i++) {
+        for (int i = first_row; i < std::min(first_row + num_rows, static_cast<int>(list_to_show.size())); ++i) {
             if (i == choice) // текущий совпадает с выбором пользователя
             {
                 attron(COLOR_PAIR(2));
                 addch('>'); // выводим указатель
                 if (mode == CHOOSE_CHAT) {
-                    // TODO отправить серверу
-                    // ProtocolPacket info = {OperationType::GET_CHAT_NAME, {list_to_show[i], "", "", ""}};
-                    // TODO получить имя от сервера
-                    
                     std::string chat_name = db.getChatName(list_to_show[i]);
                     printw("%s\n", chat_name.c_str());
                 } else if (mode == NEW_CHAT) {
                     // TODO отправить серверу
                     // ProtocolPacket info = {OperationType::GET_NAME, {list_to_show[i], "", "", ""}};
                     // TODO получить имя от сервера
-                    
                     std::string name = db.getName(list_to_show[i]);
                     printw("%s\n", name.c_str());
                 }
@@ -60,17 +57,13 @@ int choose_one_of_list(int max_rows, int max_cols, std::vector<std::string> &lis
             } else {
                 addch(' ');
                 if (mode == CHOOSE_CHAT) {
-                    // TODO отправить серверу
-                    // ProtocolPacket info = {OperationType::GET_CHAT_NAME, {list_to_show[i], "", "", ""}};
-                    // TODO получить имя от сервера
-                    
                     std::string chat_name = db.getChatName(list_to_show[i]);
                     printw("%s\n", chat_name.c_str());
                 } else if (mode == NEW_CHAT) {
                     // TODO отправить серверу
                     // ProtocolPacket info = {OperationType::GET_NAME, {list_to_show[i], "", "", ""}};
                     // TODO получить имя от сервера
-                    
+
                     std::string name = db.getName(list_to_show[i]);
                     printw("%s\n", name.c_str());
                 }
@@ -127,7 +120,8 @@ int choose_system_call(const std::vector<std::string> &buttons) {
             endwin();
             exit(0);
         } else if (ch == KEY_BACK) {
-            index();
+            delwin(win);
+            return BACK;
         } else if (ch == KEY_UP && choice > 0) {
             --choice; // указатель вверх
         } else if (ch == KEY_DOWN && choice < buttons.size() - 1) {
@@ -235,19 +229,21 @@ registration_forms(int diff, const std::string &button, const std::vector<std::s
     while (ch != KEY_ENTER && ch != '\n') {
         ch = getch();
     }
-
     endwin();
     return field_values;
 }
 
 std::string choose_chat(const std::string &username) {
     clear();
+    refresh();
     int max_rows, max_cols;
     getmaxyx(stdscr, max_rows, max_cols);
     // вызов бд, получить чаты
     std::string chat_id = "";
-    // TODO отправить серверу !!!!!!!!!
     auto chat_ids = db.getChatIdsByUsername(username);
+    if (chat_ids.empty()) {
+        return chat_id;
+    }
     curs_set(0);
     keypad(stdscr, true);
     int idx = choose_one_of_list(max_rows, max_cols, chat_ids,
@@ -256,22 +252,11 @@ std::string choose_chat(const std::string &username) {
         endwin();
         exit(0);
     } else if (idx == BACK) {
-        refresh();
+        endwin();
         index();
-    } else {
-        clear();
-        attron(A_BOLD);
-        chat_id = chat_ids[idx];
-        // TODO отправить серверу, имя чата
-        // ProtocolPacket info = {OperationType::GET_CHAT_NAME, {chat_id, "", "", ""}};
-        // TODO получить имя от сервера
-
-        printw("%s\n", db.getChatName(chat_id).c_str());
-        // TODO тут уже выбрали чат, просто показали, какой чат вообще
-        attroff(A_BOLD);
-        refresh();
-        getch();
+        return chat_id;
     }
+    chat_id = chat_ids[idx];
     endwin();
     return chat_id;
 }
@@ -303,10 +288,6 @@ std::string create_chat(const std::string &username) {
         // TODO получить имя от сервера
         std::string name = db.getName(chosen_username);
 
-        // TODO отправить серверу, создать чат
-        // ProtocolPacket info = {OperationType::CREATE_CHAT, {username, chosen_username,
-        //                                                     name}};
-        // TODO получить от сервера ответ: chat_id
         chat_id = db.createChat(username, chosen_username,
                                 name); //TODO придумать имя чату, пока это просто имя собеседника
         if (chat_id.size() > 0) {
@@ -331,7 +312,10 @@ void index() {
     int choice = LOGIN + choose_system_call(buttons);
 
     std::string username = "";
-    if (choice == SIGNUP) {
+    if (choice == BACK) {
+        index();
+        return;
+    } else if (choice == SIGNUP) {
         auto field_values = signup();
         if (field_values.empty()) {
             endwin();
@@ -362,12 +346,87 @@ void index() {
     home(username);
 }
 
+
+std::string show_input_field() {
+    clear();
+    int max_rows, max_cols;
+    getmaxyx(stdscr, max_rows, max_cols);
+    int field_y = max_rows - 2;
+    int field_x = 0;
+    int field_height = 1;
+    int field_width = max_cols;
+    WINDOW *field_win = newwin(field_height, field_width, field_y, field_x);
+    box(field_win, 0, 0);
+    wattron(field_win, A_BOLD);
+    wattron(field_win, COLOR_PAIR(3));
+    wrefresh(field_win);
+    char buffer[MAXSIZE];
+    echo();
+    curs_set(1);
+    mvwgetnstr(field_win, 0, 4, buffer, MAXSIZE);
+    noecho();
+    curs_set(0);
+    std::string message = buffer;
+    werase(field_win);
+    wrefresh(field_win);
+    delwin(field_win);
+    return message;
+}
+
+void show_messages(const std::string &chat_id, const std::string &username,
+                   std::vector<std::pair<std::string, std::string>> &list_to_show) {
+    int max_rows, max_cols;
+    getmaxyx(stdscr, max_rows, max_cols);
+
+    const int max_num_rows = RAWS;
+
+    while (true) {
+        clear();
+        refresh();
+        int num_rows = std::min(max_num_rows, 2 * static_cast<int>(list_to_show.size()));
+        int first_row = std::max(0, static_cast<int>(list_to_show.size()) - num_rows / 2);
+        for (int i = first_row; i < std::min(first_row + num_rows / 2, static_cast<int>(list_to_show.size())); ++i) {
+            addch(' ');
+            attron(A_BOLD);
+            printw("%s\n", list_to_show[i].first.c_str());
+            attroff(A_BOLD);
+            printw("%s\n", list_to_show[i].second.c_str());
+        }
+        refresh();
+        switch (getch()) {
+            case KEY_ESC:
+                endwin();
+                exit(0);
+            case KEY_BACK:
+                return;
+            case '\n':
+            case KEY_ENTER:
+                std::string message;
+                message = show_input_field();
+                if (!message.empty()) {
+                    list_to_show.emplace_back(db.getName(username), message);
+                    db.addMessage(chat_id, username, message, "1"); // TODO время
+                    //TODO отправить серверу сообщение
+                    
+                    ++first_row;
+                    if (num_rows < max_num_rows) {
+                        ++num_rows;
+                    }
+                }
+                break;
+        }
+    }
+}
+
 void home(const std::string &username) { // TODO важно!
     clear();
     std::vector<std::string> buttons = {"New chat", "Open chat", "Delete chat"};
     int choice = NEW + choose_system_call(buttons);
     std::string chat_id = "";
-    if (choice == NEW) {
+    if (choice == NEW + BACK) {
+        index();
+        return;
+    } else if (choice == NEW) {
         chat_id = create_chat(username);
     } else if (choice == OPEN || choice == DELETE) {
         chat_id = choose_chat(username);
@@ -375,14 +434,28 @@ void home(const std::string &username) { // TODO важно!
         endwin();
         exit(1);
     }
-    if (choice == DELETE) {
-        // TODO удалить из бд
+    if (chat_id.empty()) {
+        send_message("You have no chats. Create NEW one");
         home(username);
-    } else {
-        // TODO открыть чат, начать слушать порт
         return;
     }
+    if (choice == DELETE) {
+        db.removeChat(chat_id);
+        home(username);
+        return;
+    }
+    // TODO открыть чат, начать слушать порт
+
+    // TODO отправить серверу
+    // ProtocolPacket info = {OperationType::GET_NAME, {list_to_show[i], "", "", ""}};
+    // TODO получить имя от сервера
+
+    std::vector<std::pair<std::string, std::string>> messages = db.getChatMessages(chat_id);
+    show_messages(chat_id, username, messages);
+    home(username);
+    return;
 }
+
 
 std::vector<std::string> login() {
     auto field_values = registration_forms(0, "Login", {"Username", "Password"});
