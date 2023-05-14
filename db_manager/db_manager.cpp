@@ -199,7 +199,13 @@ bool LocalDBManager::addMessage(const std::string& chat_id,
         return false;
     }
 
-    chat.messages.emplace_back(users_.at(sender_name).name, content);
+    Message message{
+        .sender_name = sender_name,
+        .content = content,
+        .timestamp = timestamp
+    };
+
+    chat.messages.emplace_back(message);
     return true;
 }
 
@@ -268,11 +274,11 @@ std::set<std::string> LocalDBManager::getChatMembers(const std::string& chat_id)
     return members;
 }
 
-std::vector<std::pair<std::string, std::string>> LocalDBManager::getChatMessages(const std::string& chat_id) const {
+std::vector<Message> LocalDBManager::getChatMessages(const std::string& chat_id) const {
     if (!chats_.count(chat_id)) {
         return {};
     }
-    std::vector<std::pair<std::string, std::string>> messages;
+    std::vector<Message> messages;
     for (const auto& message : chats_.at(chat_id).messages) {
         messages.emplace_back(message);
     }

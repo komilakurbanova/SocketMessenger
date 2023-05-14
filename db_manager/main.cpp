@@ -76,9 +76,11 @@ int main() {
         std::cout << "Error: Failed to add message." << std::endl;
     }
 
-    std::vector<std::string> chat_messages = db_manager.getChatMessages(chat_id);
+    std::vector<Message> chat_messages = db_manager.getChatMessages(chat_id);
     for (const auto& message : chat_messages) {
-        std::cout << "Message in chat " << message << std::endl;
+        std::cout << "Message in chat " << message.content
+                  << " Sent by" << message.sender_name
+                  << " Timestamp : " << message.timestamp << std::endl;
     }
 
     if (db_manager.removeUser(username1)) {
