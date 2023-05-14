@@ -374,7 +374,7 @@ std::string show_input_field() {
 }
 
 void show_messages(const std::string &chat_id, const std::string &username,
-                   std::vector<std::pair<std::string, std::string>> &list_to_show) {
+                   std::vector<Message> &list_to_show) {
     int max_rows, max_cols;
     getmaxyx(stdscr, max_rows, max_cols);
 
@@ -388,9 +388,10 @@ void show_messages(const std::string &chat_id, const std::string &username,
         for (int i = first_row; i < std::min(first_row + num_rows / 2, static_cast<int>(list_to_show.size())); ++i) {
             addch(' ');
             attron(A_BOLD);
-            printw("%s\n", list_to_show[i].first.c_str());
+            printw("%s\n", list_to_show[i].content.c_str());
             attroff(A_BOLD);
-            printw("%s\n", list_to_show[i].second.c_str());
+            printw("%s\n", list_to_show[i].sender_name.c_str());
+            // TODO сюда ещё .timestamp можно прикрутить
         }
         refresh();
         switch (getch()) {
@@ -404,10 +405,16 @@ void show_messages(const std::string &chat_id, const std::string &username,
                 std::string message;
                 message = show_input_field();
                 if (!message.empty()) {
-                    list_to_show.emplace_back(db.getName(username), message);
+
+                    Message new_message;
+                    new_message.sender_name = db.getName(username);
+                    new_message.content = message;
+                    new_message.timestamp = "1"; // TODO время
+
+                    list_to_show.emplace_back(new_message);
                     db.addMessage(chat_id, username, message, "1"); // TODO время
                     //TODO отправить серверу сообщение
-                    
+
                     ++first_row;
                     if (num_rows < max_num_rows) {
                         ++num_rows;
@@ -450,7 +457,7 @@ void home(const std::string &username) { // TODO важно!
     // ProtocolPacket info = {OperationType::GET_NAME, {list_to_show[i], "", "", ""}};
     // TODO получить имя от сервера
 
-    std::vector<std::pair<std::string, std::string>> messages = db.getChatMessages(chat_id);
+    std::vector<Message> messages = db.getChatMessages(chat_id);
     show_messages(chat_id, username, messages);
     home(username);
     return;

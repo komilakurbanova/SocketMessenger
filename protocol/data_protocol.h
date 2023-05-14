@@ -1,6 +1,8 @@
 #include <atomic>
 #include <string>
 
+#include "../db_manager/db_manager.h"
+
 enum class OperationType {
     ADD_USER,
     REMOVE_USER,
@@ -40,26 +42,6 @@ bool IsChatOperation(OperationType operationType) {
 bool IsMessageOperation(OperationType operationType) {
     return operationType == OperationType::ADD_MESSAGE;
 }
-
-struct User {
-    std::string username;
-    std::string name;
-    std::string password_hash;
-    std::string password_salt;
-};
-
-struct Chat {
-    std::string chat_id;
-    std::string first_username;
-    std::string second_username;
-    std::string chat_name;
-};
-
-struct Message {
-    std::string sender_name;
-    std::string content;
-    std::string timestamp;
-};
 
 struct OperationData {
     User user;
