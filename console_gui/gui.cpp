@@ -159,7 +159,7 @@ bool is_sanitizes_input_not_empty(char *value) {
     size_t cnt = 0;
     while (cnt < len) {
         if (!isgraph(value[cnt])) {
-            for (auto j = cnt; j < len - 1; ++j) {
+            for (size_t j = cnt; j < len - 1; ++j) {
                 value[j] = value[j + 1];
             }
             value[len - 1] = '\0';
@@ -242,15 +242,16 @@ std::string choose_chat(const std::string &username) {
     getmaxyx(stdscr, max_rows, max_cols);
     // вызов бд, получить чаты
     std::string chat_id = "";
-    auto chat_ids = db.getChatIdsByUsername(username);
+    std::vector<std::string> chat_ids = db.getChatIdsByUsername(username);
     if (chat_ids.empty()) {
         return chat_id;
     }
     curs_set(0);
     keypad(stdscr, true);
-    int idx = choose_one_of_list(max_rows, max_cols,
-                                 chat_ids,
-                                 CHOOSE_CHAT); // индекс выбранного из всего списка, либо команды
+
+    // индекс выбранного из всего списка, либо команды
+    int idx = choose_one_of_list(max_rows, max_cols, chat_ids, CHOOSE_CHAT);
+
     if (idx == ESC) {
         endwin();
         exit(0);
@@ -271,7 +272,8 @@ std::string create_chat(const std::string &username) {
     getmaxyx(stdscr, max_rows, max_cols);
     std::string chat_id = "";
     // TODO отправить серверу !!!!!!!!!
-    auto users = db.getUsernamesList();
+    std::vector<std::string> users = db.getUsernamesList(); // TODO получить от сервера
+
     int idx = choose_one_of_list(max_rows, max_cols, users, NEW_CHAT);
     if (idx == ESC) {
         endwin();
@@ -280,7 +282,7 @@ std::string create_chat(const std::string &username) {
         refresh();
         index();
     } else {
-        auto chosen_username = users[idx];
+        std::string chosen_username = users[idx];
         if (chosen_username == username) {
             send_system_message("Choose someone else, you cannot create a chat with yourself");
             create_chat(username);
@@ -289,12 +291,14 @@ std::string create_chat(const std::string &username) {
         // TODO отправить серверу, получить имя пользователя
         // ProtocolPacket info = {OperationType::GET_USER_NAME, {username, "", ""}};
         // TODO получить имя от сервера
-        std::string name = db.getName(chosen_username);
 
-        chat_id = db.createChat(username, chosen_username,
-                                name); //TODO придумать имя чату, пока это просто имя собеседника
+        // TODO тут getName это имя пользователя, пока не поняли, что делать с chat_name
+        std::string chat_name = db.getName(chosen_username) + " CHAT";
+
+        //TODO придумать имя чату, пока это просто имя собеседника
+        chat_id = db.createChat(username, chosen_username, chat_name);
         if (chat_id.size() > 0) {
-            send_system_message("Chat " + name + " was created!");
+            send_system_message("Chat '" + chat_name + "' was created!");
         } else {
             send_system_message("Oops, something went wrong!");
         }
@@ -320,7 +324,7 @@ void index() {
         index();
         return;
     } else if (choice == SIGNUP) {
-        auto field_values = signup();
+        std::vector<std::string> field_values = signup();
         if (field_values.empty()) {
             endwin();
             exit(0);
@@ -332,7 +336,7 @@ void index() {
 
         send_system_message("Welcome, " + db.getName(username) + "!");
     } else if (choice == LOGIN) {
-        auto field_values = login();
+        std::vector<std::string> field_values = login();
         if (field_values.empty()) {
             endwin();
             exit(0);
@@ -349,7 +353,6 @@ void index() {
     }
     home(username);
 }
-
 
 std::string show_input_field() {
     clear();
@@ -421,8 +424,9 @@ void show_messages(const std::string &chat_id,
                     new_message.content = message;
 
                     list_to_show.emplace_back(new_message);
-                    db.addMessage(chat_id, username, message); // TODO время
+
                     //TODO отправить серверу сообщение
+                    db.addMessage(chat_id, username, message);
 
                     ++first_row;
                     if (num_rows < max_num_rows) {
@@ -438,6 +442,7 @@ void home(const std::string &username) { // TODO важно!
     clear();
     std::vector<std::string> home_buttons = {"New chat", "Open chat", "Delete chat"};
     int choice = NEW + choose_system_call(home_buttons);
+
     std::string chat_id = "";
     if (choice == NEW + BACK) {
         index();
@@ -469,13 +474,16 @@ void home(const std::string &username) { // TODO важно!
 
 
 std::vector<std::string> login() {
+    int pixel_diff = 0;
+    std::string button = "Login";
+    std::vector<std::string> fields = {"Username", "Password"};
+    std::vector<std::string> field_values = registration_forms(pixel_diff, button, fields);
 
-    auto field_values = registration_forms(0, "Login", {"Username", "Password"});
     const std::string username = field_values[0];
     // TODO вызов сервера. Есть ли такой пользователь?
     // ProtocolPacket info = {OperationType::GET_USER_NAME, {username, "", ""}};
     // TODO проверить статус
-    if (db.getName(username).size() == 0) {
+    if (db.getName(username).empty()) {
         send_system_message("This user does not exist");
         login();
     }
@@ -493,14 +501,14 @@ std::vector<std::string> login() {
 std::vector<std::string> signup() {
     int pixel_diff = 4;
     std::string button = "Sign Up";
-    std::vector<std::string> fields =  {"Name", "Username", "Password"};
-    auto field_values = registration_forms(pixel_diff, button, fields);
+    std::vector<std::string> fields = {"Name", "Username", "Password"};
+    std::vector<std::string> field_values = registration_forms(pixel_diff, button, fields);
 
     // TODO отправить серверу
     // ProtocolPacket info = {OperationType::ADD_USER, {field_values[1], field_values[0], field_values[2], "blabla salt"}};
     // TODO получить от сервера ответ: вышло или нет
 
-    if (db.addUser(field_values[1], field_values[0], field_values[2], "blabla salt")) {
+    if (db.addUser(field_values[1], field_values[0], field_values[2], "blabla salt") == true) {
         return field_values;
     }
     return {};
@@ -511,7 +519,7 @@ void init_test_usr() {
     std::string name1 = "Loki";
     std::string password_hash1 = "passwordhash1";
     std::string password_salt1 = "salt1";
-    if (db.addUser(username1, name1, password_hash1, password_salt1)) {
+    if (db.addUser(username1, name1, password_hash1, password_salt1) == true) {
         std::cout << "User 1 added successfully." << std::endl;
     } else {
         std::cout << "Failed to add user 1." << std::endl;
