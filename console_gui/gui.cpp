@@ -204,7 +204,7 @@ std::string choose_chat(const std::string &username) {
     refresh();
     int max_rows, max_cols;
     getmaxyx(stdscr, max_rows, max_cols);
-    // вызов бд, получить чаты
+    // TODO вызов бд, получить чаты
     std::string chat_id = "";
     std::vector<std::string> chat_ids = db.getChatIdsByUsername(username);
     if (chat_ids.empty()) {
@@ -345,43 +345,79 @@ std::string show_input_field() {
     return message;
 }
 
-void show_messages(const std::string &chat_id,
-                   const std::string &username,
-                   std::vector<Message> &list_to_show)
-{
+void display_message(Message& message) {
+    addch(' ');
+    attron(A_BOLD);
+    printw("%s\n", message.content.c_str());
+    attroff(A_BOLD);
+    printw("%s\n", message.sender_name.c_str());
+}
+
+void display_init_messages(std::vector<Message>& list_to_show) {
     int max_rows, max_cols;
     getmaxyx(stdscr, max_rows, max_cols);
-
+    clear();
+    refresh();
     const int max_num_rows = MAX_ROWS;
+    int num_rows = std::min(max_num_rows, 2 * static_cast<int>(list_to_show.size()));
+    int first_row = std::max(0, static_cast<int>(list_to_show.size()) - num_rows / 2);
 
-    // TODO вот тут мы раздваиваемся и выносим логику
+    // Display all messages on screen
+    for (int i = first_row; i < std::min(first_row + num_rows / 2, static_cast<int>(list_to_show.size())); ++i) {
+        display_message(list_to_show[i]);
+    }
+    refresh();
+}
+
+bool abool = false; // TODO delete;
+
+void display_new_messages(std::vector<Message>& list_to_show, std::mutex& m) {
+    // m.lock();
+
+    // m.unlock();
 
     while (true) {
-        clear();
-        refresh();
-        int num_rows = std::min(max_num_rows, 2 * static_cast<int>(list_to_show.size()));
-        int first_row = std::max(0, static_cast<int>(list_to_show.size()) - num_rows / 2);
-        // дальше - вывод всех сообщений на экран
-        for (int i = first_row; i < std::min(first_row + num_rows / 2, static_cast<int>(list_to_show.size())); ++i) {
-            addch(' ');
-            attron(A_BOLD);
-            printw("%s\n", list_to_show[i].content.c_str());
-            attroff(A_BOLD);
-            printw("%s\n", list_to_show[i].sender_name.c_str());
+        if (abool) {
+            m.lock();
+            std::cout << "tried to print message\n";
+            std::cout << "tried to print message\n";
+            std::cout << "tried to print message\n";
+            std::cout << "tried to print message\n";
+            std::cout << "tried to print message\n";
+            std::cout << "tried to print message\n";
+            std::cout << "tried to print message\n";
+            std::cout << "tried to print message\n";
+            std::cout << "tried to print message\n";
+            Message new_message {
+                .content = "HELLO",
+                .sender_name = "Nikitka",
+            };
+            display_message(new_message);
+            abool = false;
+            m.unlock();
         }
-        refresh();
+        // TODO: add listening for new messages from server
+    }
+}
+
+void send_messages(const std::string &chat_id, const std::string &username, std::vector<Message> &list_to_show, std::mutex& m) {
+    while (true) {
         switch (getch()) {
             case KEY_ESC:
                 endwin();
                 exit(0);
             case KEY_BACK:
-                return;
+                home(username);
+                break;
             case '\n':
+                // break;
             case KEY_ENTER:
-                std::string message;
-                message = show_input_field(); // длительное равно
-                if (!message.empty()) {
+                m.lock();
 
+                std::string message;
+                message = show_input_field();
+
+                if (!message.empty()) {
                     Message new_message;
                     new_message.sender_name = db.getName(username);
                     new_message.chat_id = chat_id;
@@ -389,17 +425,33 @@ void show_messages(const std::string &chat_id,
 
                     list_to_show.emplace_back(new_message);
 
-                    //TODO отправить серверу сообщение
+                    //TODO send message to the server
                     db.addMessage(chat_id, username, message);
-
-                    ++first_row;
-                    if (num_rows < max_num_rows) {
-                        ++num_rows;
-                    }
                 }
+
+                m.unlock();
+
                 break;
         }
     }
+}
+
+// TODO по идее list_to_show мы сюда подавать не должны
+void start_chat(const std::string& chat_id, const std::string& username, std::vector<Message> &list_to_show) {
+    // std::vector<Message> list_to_show; // TODO где-то тут сначала получить лист сообщений
+    std::mutex m;
+
+    display_init_messages(list_to_show);
+
+    std::thread display_thread(display_new_messages, std::ref(list_to_show), std::ref(m));
+    std::thread send_thread(send_messages, chat_id, username, std::ref(list_to_show), std::ref(m));
+
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+    abool = true;
+
+    // We wait for both threads to finish
+    display_thread.join();
+    send_thread.join();
 }
 
 void home(const std::string &username) { // TODO важно!
@@ -431,9 +483,8 @@ void home(const std::string &username) { // TODO важно!
     }
 
     std::vector<Message> messages = db.getChatMessages(chat_id);
-    show_messages(chat_id, username, messages);
-    home(username);
-    return;
+    start_chat(chat_id, username, messages);
+    // return;
 }
 
 
