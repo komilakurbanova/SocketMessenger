@@ -22,7 +22,7 @@ enum Flags {
     CHOOSE_CHAT = 0,
     NEW_CHAT = 1,
     MAXSIZE = 1024, // максимальная длина сообщения
-    RAWS = 20, // максимальное число строк в чатах
+    MAX_ROWS = 20, // максимальное число строк в чатах
 };
 
 const std::string connection_string = "dbname=messenger_db user=admin password=root host=db";
@@ -141,7 +141,7 @@ std::vector<std::string> login();
 
 void home(const std::string &username);
 
-void send_message(const std::string &message) {
+void send_system_message(const std::string &message) {
     clear();
     refresh();
     int max_rows, max_cols;
@@ -153,8 +153,8 @@ void send_message(const std::string &message) {
     sleep(2);
 }
 
-bool is_sanitizes_input_not_empty(
-        char *value) { // TODO как проверять ввод специальных символов, которые читаются как несколько? (никак)
+// TODO как проверять ввод специальных символов, которые читаются как несколько? (никак)
+bool is_sanitizes_input_not_empty(char *value) {
     size_t len = strlen(value);
     size_t cnt = 0;
     while (cnt < len) {
@@ -171,8 +171,10 @@ bool is_sanitizes_input_not_empty(
     return len;
 }
 
-std::vector<std::string>
-registration_forms(int diff, const std::string &button, const std::vector<std::string> &fields) {
+std::vector<std::string> registration_forms(int diff,
+                                            const std::string &button,
+                                            const std::vector<std::string> &fields)
+{
     std::vector<std::string> field_values;
     clear();
     start_color();
@@ -186,7 +188,7 @@ registration_forms(int diff, const std::string &button, const std::vector<std::s
     wrefresh(form_win);
     // Выводим поля ввода и метки к ним
     for (int i = 0; i < fields.size(); ++i) {
-        mvprintw(max_rows / 2 - 3 + i, max_cols / 2 - 18, "%s: ", fields[i].c_str());
+        mvprintw((max_rows / 2) - 3 + i, (max_cols / 2) - 18, "%s: ", fields[i].c_str());
         refresh();
         // Создаем окно для поля ввода
         WINDOW *field_win = newwin(1, BUFSIZE, max_rows / 2 - 3 + i, max_cols / 2 + 2);
@@ -208,7 +210,7 @@ registration_forms(int diff, const std::string &button, const std::vector<std::s
         } else {
             // Строка пуста
             free(value);
-            send_message("You entered empty string in " + fields[i] + "!");
+            send_system_message("You entered empty string in " + fields[i] + "!");
             return registration_forms(diff, button, fields);
         }
     }
@@ -246,7 +248,8 @@ std::string choose_chat(const std::string &username) {
     }
     curs_set(0);
     keypad(stdscr, true);
-    int idx = choose_one_of_list(max_rows, max_cols, chat_ids,
+    int idx = choose_one_of_list(max_rows, max_cols,
+                                 chat_ids,
                                  CHOOSE_CHAT); // индекс выбранного из всего списка, либо команды
     if (idx == ESC) {
         endwin();
@@ -279,7 +282,7 @@ std::string create_chat(const std::string &username) {
     } else {
         auto chosen_username = users[idx];
         if (chosen_username == username) {
-            send_message("Choose someone else, you cannot create a chat with yourself");
+            send_system_message("Choose someone else, you cannot create a chat with yourself");
             create_chat(username);
             return chat_id;
         }
@@ -291,14 +294,15 @@ std::string create_chat(const std::string &username) {
         chat_id = db.createChat(username, chosen_username,
                                 name); //TODO придумать имя чату, пока это просто имя собеседника
         if (chat_id.size() > 0) {
-            send_message("Chat " + name + " was created!");
+            send_system_message("Chat " + name + " was created!");
         } else {
-            send_message("Oops, something went wrong!");
+            send_system_message("Oops, something went wrong!");
         }
     }
     return chat_id;
 }
 
+// sign_up or login
 void index() {
     cbreak();
     noecho();
@@ -326,7 +330,7 @@ void index() {
         // ProtocolPacket info = {OperationType::GET_USER_NAME, {username, "", ""}};
         // TODO получить имя от сервера
 
-        send_message("Welcome, " + db.getName(username) + "!");
+        send_system_message("Welcome, " + db.getName(username) + "!");
     } else if (choice == LOGIN) {
         auto field_values = login();
         if (field_values.empty()) {
@@ -338,7 +342,7 @@ void index() {
         // ProtocolPacket info = {OperationType::GET_USER_NAME, {username, "", ""}};
         // TODO получить имя от сервера
 
-        send_message("Hello, " + db.getName(username) + "!");
+        send_system_message("Hello, " + db.getName(username) + "!");
     } else {
         endwin();
         exit(1);
@@ -364,6 +368,7 @@ std::string show_input_field() {
     echo();
     curs_set(1);
     mvwgetnstr(field_win, 0, 4, buffer, MAXSIZE);
+    // пока не нажмём enter, мы ничего не ввели, но оно показывается
     noecho();
     curs_set(0);
     std::string message = buffer;
@@ -378,20 +383,22 @@ void show_messages(const std::string &chat_id, const std::string &username,
     int max_rows, max_cols;
     getmaxyx(stdscr, max_rows, max_cols);
 
-    const int max_num_rows = RAWS;
+    const int max_num_rows = MAX_ROWS;
+
+    // TODO вот тут мы раздваиваемся и выносим логику
 
     while (true) {
         clear();
         refresh();
         int num_rows = std::min(max_num_rows, 2 * static_cast<int>(list_to_show.size()));
         int first_row = std::max(0, static_cast<int>(list_to_show.size()) - num_rows / 2);
+        // дальше - вывод всех сообщений на экран
         for (int i = first_row; i < std::min(first_row + num_rows / 2, static_cast<int>(list_to_show.size())); ++i) {
             addch(' ');
             attron(A_BOLD);
             printw("%s\n", list_to_show[i].content.c_str());
             attroff(A_BOLD);
             printw("%s\n", list_to_show[i].sender_name.c_str());
-            // TODO сюда ещё .timestamp можно прикрутить
         }
         refresh();
         switch (getch()) {
@@ -403,16 +410,15 @@ void show_messages(const std::string &chat_id, const std::string &username,
             case '\n':
             case KEY_ENTER:
                 std::string message;
-                message = show_input_field();
+                message = show_input_field(); // длительное равно
                 if (!message.empty()) {
 
                     Message new_message;
                     new_message.sender_name = db.getName(username);
                     new_message.content = message;
-                    new_message.timestamp = "1"; // TODO время
 
                     list_to_show.emplace_back(new_message);
-                    db.addMessage(chat_id, username, message, "1"); // TODO время
+                    db.addMessage(chat_id, username, message); // TODO время
                     //TODO отправить серверу сообщение
 
                     ++first_row;
@@ -427,8 +433,8 @@ void show_messages(const std::string &chat_id, const std::string &username,
 
 void home(const std::string &username) { // TODO важно!
     clear();
-    std::vector<std::string> buttons = {"New chat", "Open chat", "Delete chat"};
-    int choice = NEW + choose_system_call(buttons);
+    std::vector<std::string> home_buttons = {"New chat", "Open chat", "Delete chat"};
+    int choice = NEW + choose_system_call(home_buttons);
     std::string chat_id = "";
     if (choice == NEW + BACK) {
         index();
@@ -442,7 +448,7 @@ void home(const std::string &username) { // TODO важно!
         exit(1);
     }
     if (chat_id.empty()) {
-        send_message("You have no chats. Create NEW one");
+        send_system_message("You have no chats. Create NEW one");
         home(username);
         return;
     }
@@ -451,11 +457,6 @@ void home(const std::string &username) { // TODO важно!
         home(username);
         return;
     }
-    // TODO открыть чат, начать слушать порт
-
-    // TODO отправить серверу
-    // ProtocolPacket info = {OperationType::GET_NAME, {list_to_show[i], "", "", ""}};
-    // TODO получить имя от сервера
 
     std::vector<Message> messages = db.getChatMessages(chat_id);
     show_messages(chat_id, username, messages);
@@ -471,7 +472,7 @@ std::vector<std::string> login() {
     // ProtocolPacket info = {OperationType::GET_USER_NAME, {username, "", ""}};
     // TODO проверить статус
     if (db.getName(username).size() == 0) {
-        send_message("This user does not exist");
+        send_system_message("This user does not exist");
         login();
     }
     // TODO вызов сервера. Получить пароль
@@ -479,7 +480,7 @@ std::vector<std::string> login() {
     // TODO получить имя от сервера
 
     if (db.getPasswordHash(username) != field_values[1]) {
-        send_message("Wrong password. Try again");
+        send_system_message("Wrong password. Try again");
         login();
     }
     return field_values;
@@ -496,6 +497,8 @@ std::vector<std::string> signup() {
     }
     return {};
 }
+
+void
 
 int main() {
     // добавим какого-то пользователя для тестов
