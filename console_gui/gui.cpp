@@ -171,7 +171,7 @@ bool is_sanitizes_input_not_empty(char *value) {
     return len;
 }
 
-std::vector<std::string> registration_forms(int diff,
+std::vector<std::string> registration_forms(int pixel_diff,
                                             const std::string &button,
                                             const std::vector<std::string> &fields)
 {
@@ -182,7 +182,7 @@ std::vector<std::string> registration_forms(int diff,
     int max_rows, max_cols;
     getmaxyx(stdscr, max_rows, max_cols);
     // Рисуем рамку вокруг формы
-    WINDOW *form_win = newwin(6 + diff, 50, max_rows / 2 - 5, max_cols / 2 - BUFSIZE);
+    WINDOW *form_win = newwin(6 + pixel_diff, 50, max_rows / 2 - 5, max_cols / 2 - BUFSIZE);
     box(form_win, 0, 0);
     refresh();
     wrefresh(form_win);
@@ -211,11 +211,11 @@ std::vector<std::string> registration_forms(int diff,
             // Строка пуста
             free(value);
             send_system_message("You entered empty string in " + fields[i] + "!");
-            return registration_forms(diff, button, fields);
+            return registration_forms(pixel_diff, button, fields);
         }
     }
     // Создаем кнопку
-    WINDOW *button_win = newwin(3, 15, max_rows / 2 + diff, max_cols / 2 - 2);
+    WINDOW *button_win = newwin(3, 15, max_rows / 2 + pixel_diff, max_cols / 2 - 2);
     box(button_win, 0, 0);
     mvwprintw(button_win, 1, 4, button.c_str());
     wrefresh(button_win);
@@ -466,6 +466,7 @@ void home(const std::string &username) { // TODO важно!
 
 
 std::vector<std::string> login() {
+
     auto field_values = registration_forms(0, "Login", {"Username", "Password"});
     const std::string username = field_values[0];
     // TODO вызов сервера. Есть ли такой пользователь?
@@ -487,7 +488,11 @@ std::vector<std::string> login() {
 }
 
 std::vector<std::string> signup() {
-    auto field_values = registration_forms(4, "Sign Up", {"Name", "Username", "Password"});
+    int pixel_diff = 4;
+    std::string button = "Sign Up";
+    std::vector<std::string> fields =  {"Name", "Username", "Password"};
+    auto field_values = registration_forms(pixel_diff, button, fields);
+
     // TODO отправить серверу
     // ProtocolPacket info = {OperationType::ADD_USER, {field_values[1], field_values[0], field_values[2], "blabla salt"}};
     // TODO получить от сервера ответ: вышло или нет
@@ -498,29 +503,26 @@ std::vector<std::string> signup() {
     return {};
 }
 
-void
-
-int main() {
-    // добавим какого-то пользователя для тестов
+void init_test_usr() {
     std::string username1 = "testuser1";
     std::string name1 = "Loki";
     std::string password_hash1 = "passwordhash1";
     std::string password_salt1 = "salt1";
-
-    // TODO отправить серверу
-    // ProtocolPacket info = {OperationType::ADD_USER, {username, "", ""}};
-    // TODO получить имя от сервера
-
     if (db.addUser(username1, name1, password_hash1, password_salt1)) {
         std::cout << "User 1 added successfully." << std::endl;
     } else {
         std::cout << "Failed to add user 1." << std::endl;
     }
+    // TODO отправить серверу
+    // ProtocolPacket info = {OperationType::ADD_USER, {username, "", ""}};
+    // TODO получить имя от сервера
+}
+
+int main() {
+    init_test_usr(); // TODO убрать это из финальной версии
 
     // Инициализация ncurses, открытие окна
     initscr();
     index();
     endwin();
-    // Завершение работы окна
-    return 0;
 }

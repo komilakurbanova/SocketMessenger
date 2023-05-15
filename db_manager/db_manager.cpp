@@ -87,8 +87,7 @@
 
 //     bool DBManager::addMessage(int chat_id,
 //                                const std::string& sender_name,
-//                                const std::string& content,
-//                                const std::string& timestamp) {
+//                                const std::string& content) {
 //         pqxx::work txn(*db);
 //         try {
 //             // Get the sender_id from the users table
@@ -188,8 +187,8 @@ bool LocalDBManager::removeChat(const std::string& chat_id) {
 
 bool LocalDBManager::addMessage(const std::string& chat_id,
                                 const std::string& sender_name,
-                                const std::string& content,
-                                const std::string& timestamp) {
+                                const std::string& content)
+{
     if (!chats_.count(chat_id)) {
         return false;
     }
@@ -202,7 +201,6 @@ bool LocalDBManager::addMessage(const std::string& chat_id,
     Message message{
         .sender_name = sender_name,
         .content = content,
-        .timestamp = timestamp
     };
 
     chat.messages.emplace_back(message);
