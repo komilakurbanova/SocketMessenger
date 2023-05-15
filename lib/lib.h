@@ -1,4 +1,6 @@
 #include <string>
+#include <set>
+#include <vector>
 
 struct User {
     std::string username;
@@ -10,7 +12,6 @@ struct User {
 struct Message {
     std::string sender_name;
     std::string content;
-    std::string timestamp;
 };
 
 struct Chat {
