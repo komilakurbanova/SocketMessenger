@@ -1,3 +1,5 @@
+#pragma once
+
 #include "../lib/lib.h"
 
 class ServerConnector {
