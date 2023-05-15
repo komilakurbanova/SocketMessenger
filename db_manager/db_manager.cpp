@@ -200,6 +200,7 @@ bool LocalDBManager::addMessage(const std::string& chat_id,
 
     Message message{
         .sender_name = sender_name,
+        .chat_id = chat_id,
         .content = content,
     };
 

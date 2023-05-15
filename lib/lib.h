@@ -11,6 +11,7 @@ struct User {
 
 struct Message {
     std::string sender_name;
+    std::string chat_id;
     std::string content;
 };
 

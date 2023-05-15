@@ -378,8 +378,10 @@ std::string show_input_field() {
     return message;
 }
 
-void show_messages(const std::string &chat_id, const std::string &username,
-                   std::vector<Message> &list_to_show) {
+void show_messages(const std::string &chat_id,
+                   const std::string &username,
+                   std::vector<Message> &list_to_show)
+{
     int max_rows, max_cols;
     getmaxyx(stdscr, max_rows, max_cols);
 
@@ -415,6 +417,7 @@ void show_messages(const std::string &chat_id, const std::string &username,
 
                     Message new_message;
                     new_message.sender_name = db.getName(username);
+                    new_message.chat_id = chat_id;
                     new_message.content = message;
 
                     list_to_show.emplace_back(new_message);
