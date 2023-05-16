@@ -1,6 +1,5 @@
 #include "gui.h"
 #include <vector>
-#include <boost/asio.hpp>
 
 boost::asio::io_context io_context;
 ServerConnector connector(&io_context);
@@ -376,27 +375,27 @@ void display_all_messages(const std::string& chat_id) {
     refresh();
 }
 
-bool abool = false; // TODO delete;
-Message new_msg = {
-    .content = "HALO",
-    .sender_username = "Loki",
-};
+// bool abool = false; // TODO delete;
+// Message new_msg = {
+//     .content = "HALO",
+//     .sender_username = "Loki",
+// };
 
 void display_new_messages(const std::string& chat_id, std::mutex& m) {
-    while (true) {
-        // TODO получаем какое-то сообщение от сервера
-        if (abool) {
-            m.lock();
+    // while (true) {
+    //     // TODO получаем какое-то сообщение от сервера
+    //     if (abool) {
+    //         m.lock();
 
-            db.addMessage(chat_id, new_msg.sender_username, new_msg.content); // TODO избавиться от new_msg
+    //         db.addMessage(chat_id, new_msg.sender_username, new_msg.content); // TODO избавиться от new_msg
 
-            display_all_messages(chat_id);
-            abool = false;
+    //         display_all_messages(chat_id);
+    //         abool = false;
 
-            m.unlock();
-        }
+    //         m.unlock();
+    //     }
         // TODO: add listening for new messages from server
-    }
+    // }
 }
 
 void send_messages(const std::string& chat_id, const std::string& username, std::mutex& m) {
@@ -441,10 +440,10 @@ void start_chat(const std::string& chat_id, const std::string& username) {
     std::thread display_thread(display_new_messages, std::ref(chat_id), std::ref(m));
     std::thread send_thread(send_messages, std::ref(chat_id), std::ref(username), std::ref(m));
 
-    for (size_t i = 0; i < 10; ++i) {
-        std::this_thread::sleep_for(std::chrono::seconds(5));
-        abool = true;
-    }
+    // for (size_t i = 0; i < 10; ++i) {
+    //     std::this_thread::sleep_for(std::chrono::seconds(5));
+    //     abool = true;
+    // }
 
     display_thread.join();
     send_thread.join();

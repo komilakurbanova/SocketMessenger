@@ -1,5 +1,6 @@
 #pragma once
 
+#include <boost/asio.hpp>
 #include <ncurses.h>
 #include <unistd.h>
 #include <string>
