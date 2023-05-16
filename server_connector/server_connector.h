@@ -7,8 +7,7 @@
 
 class ServerConnector {
 public:
-    ServerConnector() {
-    }; 
+    ServerConnector(std::string ) {};
 
     void Connect() {
         socket.connect(boost::asio::ip::tcp::endpoint(boost::asio::ip::address::from_string("127.0.0.1"), 12345));
