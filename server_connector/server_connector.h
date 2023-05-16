@@ -16,6 +16,7 @@ public:
 
     void AddUser() {
         ProtocolPacket packet;
+        // ...
         communicator.SerializeAndSendPacket(packet, socket);
     }
 
