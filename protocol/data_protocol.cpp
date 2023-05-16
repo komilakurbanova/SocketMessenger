@@ -19,3 +19,21 @@ std::vector<Message> ProtocolPacket::getAllMessages() const {
 std::vector<Chat> ProtocolPacket::getAllChats() const {
     return this->operationData.allChats;
 }
+
+std::vector<std::string> ProtocolPacket::getAllUserNames() const {
+    return this->operationData.allUserNames;
+}
+
+// TODO mojno perepisat'
+
+std::string ProtocolPacket::getFirstChatMember() const {
+    return this->operationData.firstChatMember;
+}
+
+std::string ProtocolPacket::getSecondChatMember() const {
+    return this->operationData.secondChatMember;
+}
+
+std::string ProtocolPacket::getNewChatName() const {
+    return this->operationData.newChatName;
+}

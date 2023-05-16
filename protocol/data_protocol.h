@@ -1,9 +1,12 @@
 #pragma once
-
-#include <string>
-#include <vector>
-
 #include "../lib/lib.h"
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/serialization/vector.hpp>
+#include <boost/serialization/set.hpp>
+#include <boost/serialization/string.hpp>
+#include <boost/serialization/access.hpp>
+#include <vector>
 
 enum class OperationType {
     ADD_USER,
@@ -19,31 +22,8 @@ enum class OperationType {
     GET_ALL_CHATS,
     GET_CHAT_NAME,
     GET_CHAT_MEMBERS,
-    GET_ALL_CHAT_MESSAGES
+    GET_CHAT_MESSAGES
 };
-
-bool IsUserOperation(OperationType operationType) {
-    return operationType == OperationType::ADD_USER
-        || operationType == OperationType::REMOVE_USER
-        || operationType == OperationType::GET_USER_PASSWORD_HASH
-        || operationType == OperationType::GET_USER_PASSWORD_SALT
-        || operationType == OperationType::GET_USER_NAME
-        || operationType == OperationType::GET_USER_CHAT_IDS
-        || operationType == OperationType::GET_ALL_USERS;
-}
-
-bool IsChatOperation(OperationType operationType) {
-    return operationType == OperationType::CREATE_CHAT
-        || operationType == OperationType::REMOVE_CHAT
-        || operationType == OperationType::GET_ALL_CHATS
-        || operationType == OperationType::GET_CHAT_NAME
-        || operationType == OperationType::GET_CHAT_MEMBERS
-        || operationType == OperationType::GET_ALL_CHAT_MESSAGES;
-}
-
-bool IsMessageOperation(OperationType operationType) {
-    return operationType == OperationType::ADD_MESSAGE;
-}
 
 struct OperationData {
     User user;
@@ -51,6 +31,25 @@ struct OperationData {
     Message message;
     std::vector<Message> allMessages;
     std::vector<Chat> allChats;
+    std::vector<std::string> allUserNames;
+    std::string firstChatMember;
+    std::string secondChatMember;
+    std::string newChatName;
+
+    friend class boost::serialization::access;
+    template<class Archive>
+    void serialize(Archive& ar, const unsigned int version)
+    {
+        ar & user;
+        ar & chat;
+        ar & message;
+        ar & allMessages;
+        ar & allChats;
+        ar & allUserNames;
+        ar & firstChatMember;
+        ar & secondChatMember;
+        ar & newChatName;
+    }
 };
 
 struct ProtocolPacket {
@@ -62,4 +61,16 @@ struct ProtocolPacket {
     Chat getChat() const;
     std::vector<Message> getAllMessages() const;
     std::vector<Chat> getAllChats() const;
+    std::vector<std::string> getAllUserNames() const;
+    std::string getFirstChatMember() const;
+    std::string getSecondChatMember() const;
+    std::string getNewChatName() const;
+
+    friend class boost::serialization::access;
+    template<class Archive>
+    void serialize(Archive& ar, const unsigned int version)
+    {
+        ar & operationType;
+        ar & operationData;
+    }
 };
