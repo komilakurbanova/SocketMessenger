@@ -1,5 +1,5 @@
 #include <boost/asio.hpp>
-#include <thread> 
+#include <thread>
 #include "../protocol/data_protocol.h"
 #include "communicator.h"
 #include "../db_manager/db_manager.h"
@@ -54,7 +54,7 @@ void ListenAndServe(boost::asio::ip::tcp::socket socket) {
                 ServerMutex.unlock();
                 break;
             case OperationType::GET_ALL_CHATS:
-                answer.operationData.allChats = LocalDB
+                // answer.operationData.allChats = LocalDB
                 break;
             // case OperationType::GET_CHAT_NAME:
             //     break;
@@ -62,7 +62,7 @@ void ListenAndServe(boost::asio::ip::tcp::socket socket) {
             //     break;
             // case OperationType::GET_CHAT_MESSAGES:
             //     break;
-            
+
                 break;
             }
     }
