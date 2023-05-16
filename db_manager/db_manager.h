@@ -22,6 +22,7 @@ public:
     virtual std::string getPasswordSalt(const std::string& username) const = 0;
     virtual std::string getName(const std::string& username) const = 0;
     virtual std::vector<std::string> getChatIdsByUsername(const std::string& username) const = 0;
+    virtual std::vector<Chat> getChatsByUsername(const std::string& username) const = 0;
     virtual std::vector<std::string> getUsernamesList() const = 0;
 
     virtual std::vector<std::string> getChatIdList() const = 0;
@@ -61,6 +62,7 @@ public:
     std::string getPasswordSalt(const std::string& username) const override;
     std::string getName(const std::string& username) const override;
     std::vector<std::string> getChatIdsByUsername(const std::string& username) const override;
+    std::vector<Chat> getChatsByUsername(const std::string& username) const override;
     std::vector<std::string> getUsernamesList() const override;
 
     std::vector<std::string> getChatIdList() const override;

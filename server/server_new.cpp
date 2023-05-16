@@ -3,6 +3,7 @@
 #include "../protocol/data_protocol.h"
 #include "communicator.h"
 #include "../db_manager/db_manager.h"
+// #include "protocol.h"
 #include <mutex>
 #include <thread>
 
@@ -13,9 +14,9 @@ std::mutex ServerMutex;
 void ListenAndServe(boost::asio::ip::tcp::socket socket) {
     while (true) {
         ProtocolPacket pp;
-        std::cout << "abobka" << std::endl;
+        // std::cout << "abobka" << std::endl;
         MainCommunicator.ReceiveAndDeserializePacket(pp, socket);
-        std::cout << "abobka" << std::endl;
+        // std::cout << "abobka" << std::endl;
         ProtocolPacket answer;
         switch (pp.operationType) {
             case OperationType::ADD_USER:
@@ -54,17 +55,26 @@ void ListenAndServe(boost::asio::ip::tcp::socket socket) {
                 ServerMutex.unlock();
                 break;
             case OperationType::GET_ALL_CHATS:
-                // answer.operationData.allChats = LocalDB
+                answer.operationData.allChats = LocalDB.getChatsByUsername(pp.getUser().username);
+                answer.operationType = OperationType::GET_ALL_CHATS;
+                ServerMutex.lock();
+                MainCommunicator.SerializeAndSendPacket(answer, socket);
+                ServerMutex.unlock();
                 break;
-            // case OperationType::GET_CHAT_NAME:
-            //     break;
-            // case OperationType::GET_CHAT_MEMBERS:
-            //     break;
-            // case OperationType::GET_CHAT_MESSAGES:
-            //     break;
-
+            case OperationType::GET_CHAT_NAME:
+                /// TODO
                 break;
-            }
+            case OperationType::GET_CHAT_MEMBERS:
+                // TODO
+                break;
+            case OperationType::GET_CHAT_MESSAGES:
+                answer.operationData.allMessages = LocalDB.getChatMessages(pp.getChat().chat_id);
+                answer.operationType = OperationType::GET_CHAT_MESSAGES;
+                ServerMutex.lock();
+                MainCommunicator.SerializeAndSendPacket(answer, socket);
+                ServerMutex.unlock();
+                break;
+        }
     }
 }
 

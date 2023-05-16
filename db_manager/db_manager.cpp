@@ -239,6 +239,16 @@ std::vector<std::string> LocalDBManager::getChatIdsByUsername(const std::string&
     return chat_ids;
 }
 
+std::vector<Chat> LocalDBManager::getChatsByUsername(const std::string& username) const {
+    std::vector<Chat> chats;
+    for (const auto& [chat_id, chat] : chats_) {
+        if (chat.members.count(username)) {
+            chats.push_back(chat);
+        }
+    }
+    return chats;
+}
+
 std::vector<std::string> LocalDBManager::getUsernamesList() const {
     std::vector<std::string> user_list;
     for (const auto& [username, user] : users_) {
