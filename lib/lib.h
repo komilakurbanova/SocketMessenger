@@ -20,7 +20,7 @@ struct Message {
 struct Chat {
     std::string chat_id;
     std::string chat_name;
-    std::set<std::string> members;
+    std::set<std::string> members;  // set<usernames>
     std::vector<Message> messages;
 };
 
