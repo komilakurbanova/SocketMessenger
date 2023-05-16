@@ -16,6 +16,7 @@
 #include "../db_manager/db_manager.h"
 #include "../protocol/data_protocol.h"
 #include "flags.h"
+#include "../server_connector/server_connector.h"
 
 const std::string connection_string = "dbname=messenger_db user=admin password=root host=db";
 LocalDBManager db; // TODO delete

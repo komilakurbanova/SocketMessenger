@@ -1,5 +1,9 @@
 #include "gui.h"
 #include <vector>
+#include <boost/asio.hpp>
+
+boost::asio::io_context io_context;
+ServerConnector connector(&io_context);
 
 // выбор одного варианта из списка, вернет либо индекс выбранного, либо флаги возврата и выхода
 int choose_one_of_list(int max_rows, int max_cols, std::vector<std::string> &list_to_show, int mode) {
@@ -231,13 +235,14 @@ std::string choose_chat(const std::string &username) {
 }
 
 
-std::string create_chat(const std::string &username) {
+std::string open_users_list(const std::string &username) {
     clear();
     int max_rows, max_cols;
     getmaxyx(stdscr, max_rows, max_cols);
     std::string chat_id = "";
     // TODO отправить серверу !!!!!!!!!
-    std::vector<std::string> users = db.getUsernamesList(); // TODO получить от сервера
+    std::vector<std::string> users = connector.GetAllUserNames();
+    // std::vector<std::string> users = db.getUsernamesList(); // TODO получить от сервера
 
     int idx = choose_one_of_list(max_rows, max_cols, users, NEW_CHAT);
     if (idx == ESC) {
@@ -251,7 +256,7 @@ std::string create_chat(const std::string &username) {
         send_system_message("Chosen username is " + chosen_username); // TODO delete
         if (chosen_username == username) {
             send_system_message("Choose someone else, you cannot create a chat with yourself");
-            create_chat(username);
+            open_users_list(username);
             return chat_id;
         }
         // TODO отправить серверу, получить имя пользователя
@@ -290,15 +295,13 @@ void index() {
         index();
         return;
     } else if (choice == SIGNUP) {
+        // TODO signup возвращает {} всегда
         std::vector<std::string> field_values = signup();
         if (field_values.empty()) {
             endwin();
             exit(0);
         }
         username = field_values[1];
-        // TODO отправить серверу, узнать имя
-        // ProtocolPacket info = {OperationType::GET_USER_NAME, {username, "", ""}};
-        // TODO получить имя от сервера
 
         send_system_message("Welcome, " + db.getName(username) + "!");
     } else if (choice == LOGIN) {
@@ -457,7 +460,7 @@ void home(const std::string &username) { // TODO важно!
         index();
         return;
     } else if (choice == NEW) {
-        chat_id = create_chat(username);
+        chat_id = open_users_list(username);
     } else if (choice == OPEN || choice == DELETE) {
         chat_id = choose_chat(username);
     } else {
@@ -510,14 +513,13 @@ std::vector<std::string> signup() {
     std::vector<std::string> fields = {"Name", "Username", "Password"};
     std::vector<std::string> field_values = registration_forms(pixel_diff, button, fields);
 
-    // TODO отправить серверу
-    // ProtocolPacket info = {OperationType::ADD_USER, {field_values[1], field_values[0], field_values[2], "blabla salt"}};
-    // TODO получить от сервера ответ: вышло или нет
+    User new_user; // TODO переписать
+    new_user.name = field_values[0];
+    new_user.username = field_values[1];
+    new_user.password_hash = field_values[2];
+    connector.AddUser(new_user);
 
-    if (db.addUser(field_values[1], field_values[0], field_values[2], "blabla salt") == true) {
-        return field_values;
-    }
-    return {};
+    return field_values;
 }
 
 void init_test_usr() {

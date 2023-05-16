@@ -25,7 +25,7 @@ public:
 
         // Step 3: Send data through socket
         boost::asio::write(socket, boost::asio::buffer(serializedDataStr));
-    } 
+    }
 
     void ReceiveAndDeserializePacket(ProtocolPacket& packet, boost::asio::ip::tcp::socket& socket) {
         // Step 1: Receive the size of the data
