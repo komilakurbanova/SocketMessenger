@@ -167,7 +167,7 @@ std::string LocalDBManager::createChat(const std::string& first_username,
     }
 
     Chat new_chat {
-        .chat_id = std::to_string(++next_chat_id_),
+        .chat_id = std::to_string(next_chat_id_++),
         .chat_name = chat_name,
     };
     new_chat.members.insert(first_username);
@@ -189,12 +189,12 @@ bool LocalDBManager::addMessage(const std::string& chat_id,
                                 const std::string& sender_name,
                                 const std::string& content)
 {
-    if (!chats_.count(chat_id)) {
+    if (chats_.count(chat_id) == 0) {
         return false;
     }
 
     Chat& chat = chats_[chat_id];
-    if (!chat.members.count(sender_name)) {
+    if (chat.members.count(sender_name) == 0) {
         return false;
     }
 
