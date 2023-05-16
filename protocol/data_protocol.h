@@ -1,9 +1,9 @@
 #pragma once
 
-#include <atomic>
 #include <string>
+#include <vector>
 
-#include "../db_manager/db_manager.h"
+#include "../lib/lib.h"
 
 enum class OperationType {
     ADD_USER,
@@ -19,7 +19,7 @@ enum class OperationType {
     GET_ALL_CHATS,
     GET_CHAT_NAME,
     GET_CHAT_MEMBERS,
-    GET_CHAT_MESSAGES
+    GET_ALL_CHAT_MESSAGES
 };
 
 bool IsUserOperation(OperationType operationType) {
@@ -38,7 +38,7 @@ bool IsChatOperation(OperationType operationType) {
         || operationType == OperationType::GET_ALL_CHATS
         || operationType == OperationType::GET_CHAT_NAME
         || operationType == OperationType::GET_CHAT_MEMBERS
-        || operationType == OperationType::GET_CHAT_MESSAGES;
+        || operationType == OperationType::GET_ALL_CHAT_MESSAGES;
 }
 
 bool IsMessageOperation(OperationType operationType) {
@@ -49,22 +49,17 @@ struct OperationData {
     User user;
     Chat chat;
     Message message;
+    std::vector<Message> allMessages;
+    std::vector<Chat> allChats;
 };
 
 struct ProtocolPacket {
-    std::atomic_uint64_t uniqProtoId;
     OperationType operationType;
     OperationData operationData;
 
-    std::string getUsername() const;
-    std::string getName() const;
-    std::string getPasswordHash() const;
-    std::string getPasswordSalt() const;
-    std::string getChatId() const;
-    std::string getFirstUsername() const;
-    std::string getSecondUsername() const;
-    std::string getChatName() const;
-    std::string getSenderName() const;
-    std::string getContent() const;
-    std::string getTimestamp() const;
+    Message getMessage() const;
+    User getUser() const;
+    Chat getChat() const;
+    std::vector<Message> getAllMessages() const;
+    std::vector<Chat> getAllChats() const;
 };
