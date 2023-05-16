@@ -12,7 +12,7 @@ struct User {
 };
 
 struct Message {
-    std::string sender_name;
+    std::string sender_username;
     std::string chat_id;
     std::string content;
 };

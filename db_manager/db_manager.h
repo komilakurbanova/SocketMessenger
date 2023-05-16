@@ -16,7 +16,7 @@ public:
     virtual bool removeUser(const std::string& username) = 0;
     virtual std::string createChat(const std::string& first_username, const std::string& second_username, const std::string& chat_name) = 0;
     virtual bool removeChat(const std::string& chat_id) = 0;
-    virtual bool addMessage(const std::string& chat_id, const std::string& sender_name, const std::string& content) = 0;
+    virtual bool addMessage(const std::string& chat_id, const std::string& sender_username, const std::string& content) = 0;
 
     virtual std::string getPasswordHash(const std::string& username) const = 0;
     virtual std::string getPasswordSalt(const std::string& username) const = 0;
@@ -39,7 +39,7 @@ public:
 //     bool removeUser(const std::string& username) override;
 //     bool createChat(const std::string& first_username, const std::string& second_username, const std::string& chat_name) override;
 //     bool removeChat(const std::string& chat_id) override;
-//     bool addMessage(const std::string& chat_id, const std::string& sender_name, const std::string& content) override;
+//     bool addMessage(const std::string& chat_id, const std::string& sender_username, const std::string& content) override;
 
 // private:
 //     pqxx::connection connection_;
@@ -55,7 +55,7 @@ public:
     // returns chat_id
     std::string createChat(const std::string& first_username, const std::string& second_username, const std::string& chat_name) override;
     bool removeChat(const std::string& chat_id) override;
-    bool addMessage(const std::string& chat_id, const std::string& sender_name, const std::string& content) override;
+    bool addMessage(const std::string& chat_id, const std::string& sender_username, const std::string& content) override;
 
     std::string getPasswordHash(const std::string& username) const override;
     std::string getPasswordSalt(const std::string& username) const override;

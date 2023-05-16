@@ -248,6 +248,7 @@ std::string create_chat(const std::string &username) {
         index();
     } else {
         std::string chosen_username = users[idx];
+        send_system_message("Chosen username is " + chosen_username); // TODO delete
         if (chosen_username == username) {
             send_system_message("Choose someone else, you cannot create a chat with yourself");
             create_chat(username);
@@ -349,7 +350,7 @@ std::string show_input_field() {
 void display_message(Message& message) {
     addch(' ');
     attron(A_BOLD);
-    printw("%s\n", message.sender_name.c_str());
+    printw("%s\n", message.sender_username.c_str());
     attroff(A_BOLD);
     printw("%s\n", message.content.c_str());
 }
@@ -374,8 +375,8 @@ void display_all_messages(const std::string& chat_id) {
 
 bool abool = false; // TODO delete;
 Message new_msg = {
-    .content = "HELLO",
-    .sender_name = "3",
+    .content = "HALO",
+    .sender_username = "Loki",
 };
 
 void display_new_messages(const std::string& chat_id, std::mutex& m) {
@@ -384,7 +385,7 @@ void display_new_messages(const std::string& chat_id, std::mutex& m) {
         if (abool) {
             m.lock();
 
-            db.addMessage(chat_id, new_msg.sender_name, new_msg.content); // TODO избавиться от new_msg
+            db.addMessage(chat_id, new_msg.sender_username, new_msg.content); // TODO избавиться от new_msg
 
             display_all_messages(chat_id);
             abool = false;
@@ -413,7 +414,7 @@ void send_messages(const std::string& chat_id, const std::string& username, std:
 
                 if (!message.empty()) {
                     Message new_message;
-                    new_message.sender_name = db.getName(username);
+                    new_message.sender_username = db.getName(username);
                     new_message.chat_id = chat_id;
                     new_message.content = message;
 
@@ -520,7 +521,7 @@ std::vector<std::string> signup() {
 }
 
 void init_test_usr() {
-    std::string username1 = "testuser1";
+    std::string username1 = "Loki";
     std::string name1 = "Loki";
     std::string password_hash1 = "passwordhash1";
     std::string password_salt1 = "salt1";

@@ -86,15 +86,15 @@
 //     }
 
 //     bool DBManager::addMessage(int chat_id,
-//                                const std::string& sender_name,
+//                                const std::string& sender_username,
 //                                const std::string& content) {
 //         pqxx::work txn(*db);
 //         try {
 //             // Get the sender_id from the users table
-//             std::string get_sender_id = "SELECT id FROM users WHERE username = " + txn.quote(sender_name);
+//             std::string get_sender_id = "SELECT id FROM users WHERE username = " + txn.quote(sender_username);
 //             pqxx::result sender_result = txn.exec(get_sender_id);
 //             if (sender_result.empty()) {
-//                 std::cerr << "User " << sender_name << " does not exist." << std::endl;
+//                 std::cerr << "User " << sender_username << " does not exist." << std::endl;
 //                 txn.abort();
 //                 return false;
 //             }
@@ -186,7 +186,7 @@ bool LocalDBManager::removeChat(const std::string& chat_id) {
 }
 
 bool LocalDBManager::addMessage(const std::string& chat_id,
-                                const std::string& sender_name,
+                                const std::string& sender_username,
                                 const std::string& content)
 {
     if (chats_.count(chat_id) == 0) {
@@ -194,12 +194,12 @@ bool LocalDBManager::addMessage(const std::string& chat_id,
     }
 
     Chat& chat = chats_[chat_id];
-    if (chat.members.count(sender_name) == 0) {
+    if (chat.members.count(sender_username) == 0) {
         return false;
     }
 
     Message message{
-        .sender_name = sender_name,
+        .sender_username = sender_username,
         .chat_id = chat_id,
         .content = content,
     };
