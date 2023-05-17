@@ -345,7 +345,6 @@ void index() {
         index();
         return;
     } else if (choice == SIGNUP) {
-        // TODO signup возвращает {} всегда
         std::vector<std::string> field_values = signup();
         if (field_values.empty()) {
             endwin();
@@ -353,7 +352,7 @@ void index() {
         }
         username = field_values[1];
 
-        send_system_message("Welcome, " + db.getName(username) + "!");
+        send_system_message("Welcome, " + connector.GetUser(username).username + "!");
     } else if (choice == LOGIN) {
         std::vector<std::string> field_values = login();
         if (field_values.empty()) {
@@ -361,11 +360,8 @@ void index() {
             exit(0);
         }
         username = field_values[0];
-        // TODO отправить серверу, узнать имя
-        // ProtocolPacket info = {OperationType::GET_USER_NAME, {username, "", ""}};
-        // TODO получить имя от сервера
 
-        send_system_message("Hello, " + db.getName(username) + "!");
+        send_system_message("Hello, " + connector.GetUser(username).username + "!");
     } else {
         endwin();
         exit(1);
@@ -539,18 +535,11 @@ std::vector<std::string> login() {
     std::vector<std::string> field_values = registration_forms(pixel_diff, button, fields);
 
     const std::string username = field_values[0];
-    // TODO вызов сервера. Есть ли такой пользователь?
-    // ProtocolPacket info = {OperationType::GET_USER_NAME, {username, "", ""}};
-    // TODO проверить статус
-
+    // TODO пока логин происходит только
     if (connector.GetUser(username).username.empty()) {
         send_system_message("This user does not exist");
         login();
     }
-    // if (db.getPasswordHash(username) != field_values[1]) {
-    //     send_system_message("Wrong password. Try again");
-    //     login();
-    // }
     return field_values;
 }
 
@@ -566,7 +555,6 @@ std::vector<std::string> signup() {
         .password_hash = field_values[2],
     };
     connector.AddUser(new_user);
-
     return field_values;
 }
 
