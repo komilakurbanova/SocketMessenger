@@ -31,7 +31,7 @@ struct OperationData {
     Message message;
     std::vector<Message> allMessages;
     std::vector<Chat> allChats;
-    std::vector<std::string> allUserNames;
+    std::vector<User> allUsers;
     std::string firstChatMember;
     std::string secondChatMember;
     std::string newChatName;
@@ -45,7 +45,7 @@ struct OperationData {
         ar & message;
         ar & allMessages;
         ar & allChats;
-        ar & allUserNames;
+        ar & allUsers;
         ar & firstChatMember;
         ar & secondChatMember;
         ar & newChatName;
@@ -61,7 +61,7 @@ struct ProtocolPacket {
     Chat getChat() const;
     std::vector<Message> getAllMessages() const;
     std::vector<Chat> getAllChats() const;
-    std::vector<std::string> getAllUserNames() const;
+    std::vector<User> getAllUsers() const;
     std::string getFirstChatMember() const;
     std::string getSecondChatMember() const;
     std::string getNewChatName() const;

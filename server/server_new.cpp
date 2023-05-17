@@ -48,16 +48,16 @@ void ListenAndServe(boost::asio::ip::tcp::socket socket) {
                 // TODO: vupilit'
                 break;
             case OperationType::GET_ALL_USERS:
-                answer.operationData.allUserNames = LocalDB.getUsernamesList();
-                answer.operationType = OperationType::GET_ALL_USERS;
                 ServerMutex.lock();
+                answer.operationData.allUsers = LocalDB.getAllUsers();
+                answer.operationType = OperationType::GET_ALL_USERS;
                 MainCommunicator.SerializeAndSendPacket(answer, socket);
                 ServerMutex.unlock();
                 break;
             case OperationType::GET_ALL_CHATS:
+                ServerMutex.lock();
                 answer.operationData.allChats = LocalDB.getChatsByUsername(pp.getUser().username);
                 answer.operationType = OperationType::GET_ALL_CHATS;
-                ServerMutex.lock();
                 MainCommunicator.SerializeAndSendPacket(answer, socket);
                 ServerMutex.unlock();
                 break;

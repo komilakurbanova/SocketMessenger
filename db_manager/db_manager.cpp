@@ -293,3 +293,11 @@ std::vector<Message> LocalDBManager::getChatMessages(const std::string& chat_id)
     }
     return messages;
 }
+
+std::vector<User> LocalDBManager::getAllUsers() const {
+    std::vector<User> allUsers;
+    for (auto& [username, user] : users_) {
+        allUsers.push_back(user);
+    }
+    return allUsers;
+}

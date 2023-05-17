@@ -26,3 +26,4 @@ void index();
 std::vector<std::string> signup();
 std::vector<std::string> login();
 void home(const std::string &username);
+void send_system_message(const std::string &message);

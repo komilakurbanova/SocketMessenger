@@ -1,11 +1,21 @@
 #include "gui.h"
+#include <exception>
 #include <vector>
 
 boost::asio::io_context io_context;
 ServerConnector connector(&io_context);
 
 // выбор одного варианта из списка, вернет либо индекс выбранного, либо флаги возврата и выхода
-int choose_one_of_list(int max_rows, int max_cols, std::vector<std::string> &list_to_show, int mode) {
+
+void print_chat_name(Chat chat) {
+    printw("%s\n", chat.chat_name.c_str());
+}
+
+void print_name_of_user(User user) {
+    printw("%s\n", user.name.c_str());
+}
+
+int choose_one_of_list_chat(int max_rows, int max_cols, std::vector<Chat>& list_to_show, int mode) {
     init_pair(2, COLOR_BLUE, COLOR_WHITE); // цвет выделения
     int num_rows = std::min(max_rows, static_cast<int>(list_to_show.size()));
     int choice = 0; //Выбор пользователя
@@ -18,28 +28,71 @@ int choose_one_of_list(int max_rows, int max_cols, std::vector<std::string> &lis
                 attron(COLOR_PAIR(2));
                 addch('>'); // выводим указатель
                 if (mode == CHOOSE_CHAT) {
-                    std::string chat_name = db.getChatName(list_to_show[i]);
-                    printw("%s\n", chat_name.c_str());
+                    print_chat_name(list_to_show[i]);
                 } else if (mode == NEW_CHAT) {
-                    // TODO отправить серверу
-                    // ProtocolPacket info = {OperationType::GET_NAME, {list_to_show[i], "", "", ""}};
-                    // TODO получить имя от сервера
-                    std::string name = db.getName(list_to_show[i]);
-                    printw("%s\n", name.c_str());
+                    send_system_message("wrong call of choose_one_of_list_chat");
                 }
                 attroff(COLOR_PAIR(2));
             } else {
                 addch(' ');
                 if (mode == CHOOSE_CHAT) {
-                    std::string chat_name = db.getChatName(list_to_show[i]);
-                    printw("%s\n", chat_name.c_str());
+                    print_chat_name(list_to_show[i]);
                 } else if (mode == NEW_CHAT) {
-                    // TODO отправить серверу
-                    // ProtocolPacket info = {OperationType::GET_NAME, {list_to_show[i], "", "", ""}};
-                    // TODO получить имя от сервера
+                    send_system_message("wrong call of choose_one_of_list_chat");
+                }
+                attroff(COLOR_PAIR(2));
+            }
+        }
+        refresh();
+        switch (getch()) {
+            case KEY_ESC: // закрыть программу
+                endwin();
+                exit(0);
+            case KEY_BACK:
+                return BACK;
+            case KEY_UP:
+                if (choice > 0) // указатель вверх
+                    --choice;
+                if (choice < first_row) // прокрутка вверх
+                    first_row = choice;
+                break;
+            case KEY_DOWN:
+                if (choice < list_to_show.size() - 1) // указатель вниз
+                    ++choice;
+                if (choice >= first_row + num_rows) // прокрутка вниз
+                    first_row = choice - num_rows + 1;
+                break;
+            case KEY_ENTER:
+            case '\n':
+                return choice; // какой индекс из списка выбран
+        }
+    }
+}
 
-                    std::string name = db.getName(list_to_show[i]);
-                    printw("%s\n", name.c_str());
+int choose_one_of_list_user(int max_rows, int max_cols, std::vector<User>& list_to_show, int mode) {
+    init_pair(2, COLOR_BLUE, COLOR_WHITE); // цвет выделения
+    int num_rows = std::min(max_rows, static_cast<int>(list_to_show.size()));
+    int choice = 0; //Выбор пользователя
+    while (true) {
+        clear();
+        int first_row = std::max(0, choice - num_rows / 2);
+        for (int i = first_row; i < std::min(first_row + num_rows, static_cast<int>(list_to_show.size())); ++i) {
+            if (i == choice) // текущий совпадает с выбором пользователя
+            {
+                attron(COLOR_PAIR(2));
+                addch('>'); // выводим указатель
+                if (mode == CHOOSE_CHAT) {
+                    send_system_message("wrong call of choose_one_of_list_user");
+                } else if (mode == NEW_CHAT) {
+                    print_name_of_user(list_to_show[i]);
+                }
+                attroff(COLOR_PAIR(2));
+            } else {
+                addch(' ');
+                if (mode == CHOOSE_CHAT) {
+                    send_system_message("wrong call of choose_one_of_list_user");
+                } else if (mode == NEW_CHAT) {
+                    print_name_of_user(list_to_show[i]);
                 }
                 attroff(COLOR_PAIR(2));
             }
@@ -218,7 +271,9 @@ std::string choose_chat(const std::string &username) {
     keypad(stdscr, true);
 
     // индекс выбранного из всего списка, либо команды
-    int idx = choose_one_of_list(max_rows, max_cols, chat_ids, CHOOSE_CHAT);
+    // TODO раскоменть, это печать всех чатов
+    int idx = 0; // TODO удали
+    // int idx = choose_one_of_list_chat(max_rows, max_cols, chat_ids, CHOOSE_CHAT);
 
     if (idx == ESC) {
         endwin();
@@ -234,19 +289,15 @@ std::string choose_chat(const std::string &username) {
 }
 
 
-std::string open_users_list(const std::string &username) {
+std::string open_users_list(const std::string &client_username) {
     clear();
     int max_rows, max_cols;
     getmaxyx(stdscr, max_rows, max_cols);
     std::string chat_id = "";
 
-    std::vector<std::string> users = connector.GetAllUserNames();
-    send_system_message("BEBRIM"); // TODO delete
-    for (auto str : users) {
-        send_system_message(str);
-    }
+    std::vector<User> users = connector.GetAllUsers();
 
-    int idx = choose_one_of_list(max_rows, max_cols, users, NEW_CHAT);
+    int idx = choose_one_of_list_user(max_rows, max_cols, users, NEW_CHAT);
     if (idx == ESC) {
         endwin();
         exit(0);
@@ -254,23 +305,20 @@ std::string open_users_list(const std::string &username) {
         refresh();
         index();
     } else {
-        std::string chosen_username = users[idx];
-        send_system_message("Chosen username is " + chosen_username); // TODO delete
-        if (chosen_username == username) {
+        std::string chosen_username = users[idx].username;
+        send_system_message("Chosen username is " + chosen_username + ". Name is " + users[idx].name);
+        if (chosen_username == client_username) {
             send_system_message("Choose someone else, you cannot create a chat with yourself");
-            open_users_list(username);
+            open_users_list(client_username);
             return chat_id;
         }
-        // TODO отправить серверу, получить имя пользователя
-        // ProtocolPacket info = {OperationType::GET_USER_NAME, {username, "", ""}};
-        // TODO получить имя от сервера
 
-        // TODO тут getName это имя пользователя, пока не поняли, что делать с chat_name
-        std::string chat_name = db.getName(chosen_username) + " CHAT";
+        std::string chat_name = chosen_username + " CHAT";
+        connector.CreateChat(client_username, chosen_username, chat_name);
 
-        //TODO придумать имя чату, пока это просто имя собеседника
-        chat_id = db.createChat(username, chosen_username, chat_name);
-        if (chat_id.size() > 0) {
+        std::vector<Chat> all_chats = connector.GetAllChats(users[idx]);
+        chat_id = all_chats.back().chat_id;
+        if (all_chats.size() > 0) {
             send_system_message("Chat '" + chat_name + "' was created! (chat_id " + chat_id + ")");
         } else {
             send_system_message("Oops, something went wrong!");
@@ -515,34 +563,17 @@ std::vector<std::string> signup() {
     std::vector<std::string> fields = {"Name", "Username", "Password"};
     std::vector<std::string> field_values = registration_forms(pixel_diff, button, fields);
 
-    User new_user; // TODO переписать
-    new_user.name = field_values[0];
-    new_user.username = field_values[1];
-    new_user.password_hash = field_values[2];
+    User new_user {
+        .name = field_values[0],
+        .username = field_values[1],
+        .password_hash = field_values[2],
+    };
     connector.AddUser(new_user);
 
     return field_values;
 }
 
-void init_test_usr() {
-    std::string username1 = "Loki";
-    std::string name1 = "Loki";
-    std::string password_hash1 = "passwordhash1";
-    std::string password_salt1 = "salt1";
-    if (db.addUser(username1, name1, password_hash1, password_salt1) == true) {
-        std::cout << "User 1 added successfully." << std::endl;
-    } else {
-        std::cout << "Failed to add user 1." << std::endl;
-    }
-    // TODO отправить серверу
-    // ProtocolPacket info = {OperationType::ADD_USER, {username, "", ""}};
-    // TODO получить имя от сервера
-}
-
 int main() {
-    init_test_usr(); // TODO убрать это из финальной версии
-
-    // Инициализация ncurses, открытие окна
     initscr();
     index();
     endwin();

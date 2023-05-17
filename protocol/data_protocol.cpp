@@ -20,8 +20,8 @@ std::vector<Chat> ProtocolPacket::getAllChats() const {
     return this->operationData.allChats;
 }
 
-std::vector<std::string> ProtocolPacket::getAllUserNames() const {
-    return this->operationData.allUserNames;
+std::vector<User> ProtocolPacket::getAllUsers() const {
+    return this->operationData.allUsers;
 }
 
 // TODO mojno perepisat'

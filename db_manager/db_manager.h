@@ -29,6 +29,8 @@ public:
     virtual std::string getChatName(const std::string& chat_id) const = 0;
     virtual std::set<std::string> getChatMembers(const std::string& chat_id) const = 0;
     virtual std::vector<Message> getChatMessages(const std::string& chat_id) const = 0;
+
+    virtual std::vector<User> getAllUsers() const = 0;
 };
 
 // class DBManager : public IDBManager {
@@ -69,6 +71,8 @@ public:
     std::string getChatName(const std::string& chat_id) const override;
     std::set<std::string> getChatMembers(const std::string& chat_id) const override;
     std::vector<Message> getChatMessages(const std::string& chat_id) const override;
+
+    std::vector<User> getAllUsers() const override;
 
 protected:
     int next_chat_id_ = 1;
