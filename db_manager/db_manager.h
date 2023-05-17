@@ -13,8 +13,11 @@ class IDBManager {
 public:
     virtual bool addUser(const std::string& username, const std::string& name,
                          const std::string& password_hash, const std::string& password_salt) = 0;
+    virtual User getUser(const std::string& username) = 0;
     virtual bool removeUser(const std::string& username) = 0;
-    virtual std::string createChat(const std::string& first_username, const std::string& second_username, const std::string& chat_name) = 0;
+    virtual std::string createChat(const std::string& first_username,
+                                   const std::string& second_username,
+                                   const std::string& chat_name) = 0;
     virtual bool removeChat(const std::string& chat_id) = 0;
     virtual bool addMessage(const std::string& chat_id, const std::string& sender_username, const std::string& content) = 0;
 
@@ -73,6 +76,7 @@ public:
     std::vector<Message> getChatMessages(const std::string& chat_id) const override;
 
     std::vector<User> getAllUsers() const override;
+    User getUser(const std::string& username) override;
 
 protected:
     int next_chat_id_ = 1;

@@ -35,14 +35,11 @@ void ListenAndServe(boost::asio::ip::tcp::socket socket) {
             case OperationType::ADD_MESSAGE:
                 LocalDB.addMessage(pp.getMessage().chat_id, pp.getMessage().sender_username, pp.getMessage().content);
                 break;
-            case OperationType::GET_USER_PASSWORD_HASH:
-                // TODO
-                break;
-            case OperationType::GET_USER_PASSWORD_SALT:
-                // TODO
-                break;
-            case OperationType::GET_USER_NAME:
-                // TODO: vupilit'
+            case OperationType::GET_USER:
+                ServerMutex.lock();
+                answer.operationData.user = LocalDB.getUser(pp.getUser().username);
+                MainCommunicator.SerializeAndSendPacket(answer, socket);
+                ServerMutex.unlock();
                 break;
             case OperationType::GET_USER_CHAT_IDS:
                 // TODO: vupilit'

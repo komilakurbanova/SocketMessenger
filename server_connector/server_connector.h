@@ -55,6 +55,17 @@ public:
         return recv_packet.getAllChats();
     }
 
+    User GetUser(const std::string& username) {
+        ProtocolPacket packet;
+        packet.operationType = OperationType::GET_USER;
+        packet.operationData.user = {.username = username};
+        communicator_.SerializeAndSendPacket(packet, socket_);
+
+        ProtocolPacket recv_packet;
+        communicator_.ReceiveAndDeserializePacket(recv_packet, socket_);
+        return recv_packet.getUser();
+    }
+
     void PushMessage(Message);
 
 private:

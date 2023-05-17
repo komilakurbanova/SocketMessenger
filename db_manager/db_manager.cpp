@@ -301,3 +301,7 @@ std::vector<User> LocalDBManager::getAllUsers() const {
     }
     return allUsers;
 }
+
+User LocalDBManager::getUser(const std::string& username) {
+    return users_[username];
+}

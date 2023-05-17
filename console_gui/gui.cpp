@@ -542,18 +542,15 @@ std::vector<std::string> login() {
     // TODO вызов сервера. Есть ли такой пользователь?
     // ProtocolPacket info = {OperationType::GET_USER_NAME, {username, "", ""}};
     // TODO проверить статус
-    if (db.getName(username).empty()) {
+
+    if (connector.GetUser(username).username.empty()) {
         send_system_message("This user does not exist");
         login();
     }
-    // TODO вызов сервера. Получить пароль
-    // ProtocolPacket info = {OperationType::GET_USER_PASSWORD_HASH, {username, "", ""}};
-    // TODO получить имя от сервера
-
-    if (db.getPasswordHash(username) != field_values[1]) {
-        send_system_message("Wrong password. Try again");
-        login();
-    }
+    // if (db.getPasswordHash(username) != field_values[1]) {
+    //     send_system_message("Wrong password. Try again");
+    //     login();
+    // }
     return field_values;
 }
 
