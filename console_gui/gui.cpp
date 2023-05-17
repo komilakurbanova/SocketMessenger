@@ -261,20 +261,15 @@ std::string choose_chat(const std::string &username) {
     refresh();
     int max_rows, max_cols;
     getmaxyx(stdscr, max_rows, max_cols);
-    // TODO вызов бд, получить чаты
     std::string chat_id = "";
-    std::vector<std::string> chat_ids = db.getChatIdsByUsername(username);
-    if (chat_ids.empty()) {
+    std::vector<Chat> chats = connector.GetChatsByUsername(username);
+    if (chats.empty()) {
         return chat_id;
     }
     curs_set(0);
     keypad(stdscr, true);
 
-    // индекс выбранного из всего списка, либо команды
-    // TODO раскоменть, это печать всех чатов
-    int idx = 0; // TODO удали
-    // int idx = choose_one_of_list_chat(max_rows, max_cols, chat_ids, CHOOSE_CHAT);
-
+    int idx = choose_one_of_list_chat(max_rows, max_cols, chats, CHOOSE_CHAT);
     if (idx == ESC) {
         endwin();
         exit(0);
@@ -283,7 +278,7 @@ std::string choose_chat(const std::string &username) {
         index();
         return chat_id;
     }
-    chat_id = chat_ids[idx];
+    chat_id = chats[idx].chat_id;
     endwin();
     return chat_id;
 }
@@ -306,7 +301,6 @@ std::string open_users_list(const std::string &client_username) {
         index();
     } else {
         std::string chosen_username = users[idx].username;
-        send_system_message("Chosen username is " + chosen_username + ". Name is " + users[idx].name);
         if (chosen_username == client_username) {
             send_system_message("Choose someone else, you cannot create a chat with yourself");
             open_users_list(client_username);
@@ -314,11 +308,8 @@ std::string open_users_list(const std::string &client_username) {
         }
 
         std::string chat_name = chosen_username + " CHAT";
-        connector.CreateChat(client_username, chosen_username, chat_name);
-
-        std::vector<Chat> all_chats = connector.GetAllChats(users[idx]);
-        chat_id = all_chats.back().chat_id;
-        if (all_chats.size() > 0) {
+        chat_id = connector.CreateChat(client_username, chosen_username, chat_name);
+        if (chat_id != "") {
             send_system_message("Chat '" + chat_name + "' was created! (chat_id " + chat_id + ")");
         } else {
             send_system_message("Oops, something went wrong!");
@@ -410,7 +401,7 @@ void display_all_messages(const std::string& chat_id) {
     clear();
     refresh();
     const int max_num_rows = MAX_ROWS;
-    std::vector<Message> list_to_show = db.getChatMessages(chat_id);
+    std::vector<Message> list_to_show = connector.GetChatMessages(chat_id);
 
     int num_rows = std::min(max_num_rows, 2 * static_cast<int>(list_to_show.size()));
     int first_row = std::max(0, static_cast<int>(list_to_show.size()) - num_rows / 2);
@@ -421,12 +412,6 @@ void display_all_messages(const std::string& chat_id) {
     }
     refresh();
 }
-
-// bool abool = false; // TODO delete;
-// Message new_msg = {
-//     .content = "HALO",
-//     .sender_username = "Loki",
-// };
 
 void display_new_messages(const std::string& chat_id, std::mutex& m) {
     // while (true) {
@@ -519,7 +504,7 @@ void home(const std::string &username) { // TODO важно!
         return;
     }
     if (choice == DELETE) {
-        db.removeChat(chat_id);
+        db.removeChat(chat_id); // TODO
         home(username);
         return;
     }

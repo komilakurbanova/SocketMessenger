@@ -34,13 +34,17 @@ public:
         return recv_packet.getAllUsers();
     }
 
-    void CreateChat(const std::string& first_username, const std::string& second_username, const std::string& chat_name) {
+    std::string CreateChat(const std::string& first_username, const std::string& second_username, const std::string& chat_name) {
         ProtocolPacket packet;
         packet.operationType = OperationType::CREATE_CHAT;
         packet.operationData.firstChatMember = first_username;
         packet.operationData.secondChatMember = second_username;
         packet.operationData.newChatName = chat_name;
         communicator_.SerializeAndSendPacket(packet, socket_);
+
+        ProtocolPacket recv_packet;
+        communicator_.ReceiveAndDeserializePacket(recv_packet, socket_);
+        return recv_packet.operationData.newChatId;
     }
 
     std::vector<Chat> GetAllChats(const User& user) {
@@ -66,7 +70,26 @@ public:
         return recv_packet.getUser();
     }
 
-    void PushMessage(Message);
+    std::vector<Message> GetChatMessages(const std::string& chat_id) {
+        ProtocolPacket packet;
+        packet.operationType = OperationType::GET_CHAT_MESSAGES;
+        communicator_.SerializeAndSendPacket(packet, socket_);
+
+        ProtocolPacket recv_packet;
+        communicator_.ReceiveAndDeserializePacket(recv_packet, socket_);
+        return recv_packet.getAllMessages();
+    }
+
+    std::vector<Chat> GetChatsByUsername(const std::string& username) {
+        ProtocolPacket packet;
+        packet.operationType = OperationType::GET_ALL_CHATS;
+        packet.operationData.user = {.username = username};
+        communicator_.SerializeAndSendPacket(packet, socket_);
+
+        ProtocolPacket recv_packet;
+        communicator_.ReceiveAndDeserializePacket(recv_packet, socket_);
+        return recv_packet.getAllChats();
+    }
 
 private:
     boost::asio::ip::tcp::socket socket_;

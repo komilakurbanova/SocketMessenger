@@ -305,3 +305,12 @@ std::vector<User> LocalDBManager::getAllUsers() const {
 User LocalDBManager::getUser(const std::string& username) {
     return users_[username];
 }
+
+Chat LocalDBManager::getChat(const std::string& chat_name) {
+    for (auto& [chat_id, chat] : chats_) {
+        if (chat.chat_name == chat_name) {
+            return chat;
+        }
+    }
+    return {};
+}

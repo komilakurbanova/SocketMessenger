@@ -18,8 +18,6 @@ enum class OperationType {
     GET_USER_CHAT_IDS,
     GET_ALL_USERS,
     GET_ALL_CHATS,
-    GET_CHAT_NAME,
-    GET_CHAT_MEMBERS,
     GET_CHAT_MESSAGES
 };
 
@@ -33,6 +31,7 @@ struct OperationData {
     std::string firstChatMember;
     std::string secondChatMember;
     std::string newChatName;
+    std::string newChatId;
 
     friend class boost::serialization::access;
     template<class Archive>
@@ -47,6 +46,7 @@ struct OperationData {
         ar & firstChatMember;
         ar & secondChatMember;
         ar & newChatName;
+        ar & newChatId;
     }
 };
 

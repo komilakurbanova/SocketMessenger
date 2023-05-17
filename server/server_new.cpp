@@ -27,7 +27,13 @@ void ListenAndServe(boost::asio::ip::tcp::socket socket) {
                 LocalDB.removeUser(pp.getUser().username);
                 break;
             case OperationType::CREATE_CHAT:
-                LocalDB.createChat(pp.getFirstChatMember(), pp.getSecondChatMember(), pp.getNewChatName());
+                ServerMutex.lock();
+                {
+                    std::string chat_id = LocalDB.createChat(pp.getFirstChatMember(), pp.getSecondChatMember(), pp.getNewChatName());
+                    answer.operationData.newChatId = chat_id;
+                    MainCommunicator.SerializeAndSendPacket(answer, socket);
+                }
+                ServerMutex.unlock();
                 break;
             case OperationType::REMOVE_CHAT:
                 LocalDB.removeChat(pp.getChat().chat_id);
@@ -58,16 +64,10 @@ void ListenAndServe(boost::asio::ip::tcp::socket socket) {
                 MainCommunicator.SerializeAndSendPacket(answer, socket);
                 ServerMutex.unlock();
                 break;
-            case OperationType::GET_CHAT_NAME:
-                /// TODO
-                break;
-            case OperationType::GET_CHAT_MEMBERS:
-                // TODO
-                break;
             case OperationType::GET_CHAT_MESSAGES:
+                ServerMutex.lock();
                 answer.operationData.allMessages = LocalDB.getChatMessages(pp.getChat().chat_id);
                 answer.operationType = OperationType::GET_CHAT_MESSAGES;
-                ServerMutex.lock();
                 MainCommunicator.SerializeAndSendPacket(answer, socket);
                 ServerMutex.unlock();
                 break;
