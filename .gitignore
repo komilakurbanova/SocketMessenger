@@ -11,3 +11,7 @@ install_manifest.txt
 compile_commands.json
 CTestTestfile.cmake
 _deps*.DS_Store
+client_bin
+gui_bin
+server_bin
+

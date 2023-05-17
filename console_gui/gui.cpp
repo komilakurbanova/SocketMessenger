@@ -239,9 +239,12 @@ std::string open_users_list(const std::string &username) {
     int max_rows, max_cols;
     getmaxyx(stdscr, max_rows, max_cols);
     std::string chat_id = "";
-    // TODO отправить серверу !!!!!!!!!
+
     std::vector<std::string> users = connector.GetAllUserNames();
-    // std::vector<std::string> users = db.getUsernamesList(); // TODO получить от сервера
+    send_system_message("BEBRIM"); // TODO delete
+    for (auto str : users) {
+        send_system_message(str);
+    }
 
     int idx = choose_one_of_list(max_rows, max_cols, users, NEW_CHAT);
     if (idx == ESC) {

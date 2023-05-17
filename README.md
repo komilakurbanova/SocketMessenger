@@ -15,8 +15,42 @@
 - `cd ..`
 - `rm -r boost_1_82_0/ boost_1_82_0.tar.gz`
 
-> Компиляция клиента: `g++ -std=c++17 server/test/test1.cpp db_manager/db_manager.cpp protocol/data_protocol.cpp -o client_bin -lboost_serialization -lboost_system -lboost_thread -lboost_chrono`
-> Компиляция сервера: `g++ -std=c++17 server/test/test1.cpp db_manager/db_manager.cpp protocol/data_protocol.cpp -o client_bin -lboost_serialization -lboost_system -lboost_thread -lboost_chrono`
+> Компиляция кринж-клиента: `g++ -std=c++17 server/test/test1.cpp db_manager/db_manager.cpp protocol/data_protocol.cpp -o client_bin -lboost_serialization -lboost_system -lboost_thread -lboost_chrono`
+
+- Кринж-клиент просто добавляет argv как клиента, нужен для дебага
+
+> Компиляция клиента (gui): `g++ -std=c++17 console_gui/gui.cpp db_manager/db_manager.cpp protocol/data_protocol.cpp -o gui_bin -lboost_serialization -lboost_system -lboost_thread -lboost_chrono -lncurses`
+
+- Клиент выступает в том числе и за gui
+
+> Компиляция сервера: `g++ -std=c++17 server/server_new.cpp db_manager/db_manager.cpp protocol/data_protocol.cpp -o server_bin -lboost_serialization`
+
+---
+
+## GUI
+
+### Нажатия клавиш
+
+`Escape` - выход из интерфейса.
+
+`Backspace` - возврат к приветственному меню.
+
+`Enter` - подтвердить действие: ввод или выбор опции.
+
+Навигация с помощью стрелок `up` и `down`.
+
+### Правила ввода данных при регистрации
+
+До тех пор, пока поля авторизации/регистрации не будут заполнены (то есть пока выбор не дойдет до кнопки подтверждения), нельзя пользоваться командами – все введенное будет учтено в заполнении полей.
+
+Ограничение по количеству символов для каждого поля - **20**. Не отображающиеся графически (`!isgraph()`) символы будут проигнорированы при занесении в базу данных, но учтены при учете ограничения по длине.
+
+### Ввод сообщений в чат
+
+Нажмите Enter для того, чтобы получить доступ к вводу сообщения. Для отправки нажмите `Enter`. Если поле ввода было отправленно пустым, то сообщение отправлено не будет, вы перейдете обратно к режиму чтения.
+Из режима чтения можно вернуться обратно к выбору операций над чатами или закрыть программу.
+
+---
 
 ## Цель проекта
 
