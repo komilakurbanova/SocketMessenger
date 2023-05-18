@@ -7,15 +7,7 @@ ServerConnector connector(&io_context);
 
 // выбор одного варианта из списка, вернет либо индекс выбранного, либо флаги возврата и выхода
 
-void print_chat_name(Chat chat) {
-    printw("%s\n", chat.chat_name.c_str());
-}
-
-void print_name_of_user(User user) {
-    printw("%s\n", user.name.c_str());
-}
-
-int choose_one_of_list_chat(int max_rows, int max_cols, std::vector<Chat>& list_to_show, int mode) {
+int choose_one_of_list(int max_rows, int max_cols, std::vector<std::string>& list_to_show) {
     init_pair(2, COLOR_BLUE, COLOR_WHITE); // цвет выделения
     int num_rows = std::min(max_rows, static_cast<int>(list_to_show.size()));
     int choice = 0; //Выбор пользователя
@@ -27,73 +19,11 @@ int choose_one_of_list_chat(int max_rows, int max_cols, std::vector<Chat>& list_
             {
                 attron(COLOR_PAIR(2));
                 addch('>'); // выводим указатель
-                if (mode == CHOOSE_CHAT) {
-                    print_chat_name(list_to_show[i]);
-                } else if (mode == NEW_CHAT) {
-                    send_system_message("wrong call of choose_one_of_list_chat");
-                }
+                printw("%s\n", list_to_show[i].c_str());
                 attroff(COLOR_PAIR(2));
             } else {
                 addch(' ');
-                if (mode == CHOOSE_CHAT) {
-                    print_chat_name(list_to_show[i]);
-                } else if (mode == NEW_CHAT) {
-                    send_system_message("wrong call of choose_one_of_list_chat");
-                }
-                attroff(COLOR_PAIR(2));
-            }
-        }
-        refresh();
-        switch (getch()) {
-            case KEY_ESC: // закрыть программу
-                endwin();
-                exit(0);
-            case KEY_BACK:
-                return BACK;
-            case KEY_UP:
-                if (choice > 0) // указатель вверх
-                    --choice;
-                if (choice < first_row) // прокрутка вверх
-                    first_row = choice;
-                break;
-            case KEY_DOWN:
-                if (choice < list_to_show.size() - 1) // указатель вниз
-                    ++choice;
-                if (choice >= first_row + num_rows) // прокрутка вниз
-                    first_row = choice - num_rows + 1;
-                break;
-            case KEY_ENTER:
-            case '\n':
-                return choice; // какой индекс из списка выбран
-        }
-    }
-}
-
-int choose_one_of_list_user(int max_rows, int max_cols, std::vector<User>& list_to_show, int mode) {
-    init_pair(2, COLOR_BLUE, COLOR_WHITE); // цвет выделения
-    int num_rows = std::min(max_rows, static_cast<int>(list_to_show.size()));
-    int choice = 0; //Выбор пользователя
-    while (true) {
-        clear();
-        int first_row = std::max(0, choice - num_rows / 2);
-        for (int i = first_row; i < std::min(first_row + num_rows, static_cast<int>(list_to_show.size())); ++i) {
-            if (i == choice) // текущий совпадает с выбором пользователя
-            {
-                attron(COLOR_PAIR(2));
-                addch('>'); // выводим указатель
-                if (mode == CHOOSE_CHAT) {
-                    send_system_message("wrong call of choose_one_of_list_user");
-                } else if (mode == NEW_CHAT) {
-                    print_name_of_user(list_to_show[i]);
-                }
-                attroff(COLOR_PAIR(2));
-            } else {
-                addch(' ');
-                if (mode == CHOOSE_CHAT) {
-                    send_system_message("wrong call of choose_one_of_list_user");
-                } else if (mode == NEW_CHAT) {
-                    print_name_of_user(list_to_show[i]);
-                }
+                printw("%s\n", list_to_show[i].c_str());
                 attroff(COLOR_PAIR(2));
             }
         }
@@ -142,7 +72,7 @@ int choose_system_call(const std::vector<std::string> &buttons) {
         refresh();
         wrefresh(win);
         int ch = getch();
-        if (ch == KEY_ESC) { // закрыть программу
+        if (ch == KEY_ESC) {
             delwin(win);
             endwin();
             exit(0);
@@ -174,8 +104,7 @@ void send_system_message(const std::string &message) {
     sleep(2);
 }
 
-// TODO как проверять ввод специальных символов, которые читаются как несколько? (никак)
-bool is_sanitizes_input_not_empty(char *value) {
+bool is_sanitized_input_not_empty(char *value) {
     size_t len = strlen(value);
     size_t cnt = 0;
     while (cnt < len) {
@@ -225,7 +154,7 @@ std::vector<std::string> registration_forms(int pixel_diff,
         wgetstr(field_win, value);
         noecho();
 
-        if (is_sanitizes_input_not_empty(value)) {
+        if (is_sanitized_input_not_empty(value)) {
             // Строка содержит хотя бы один печатный символ, строка теперь sanitized
             field_values.push_back(value);
         } else {
@@ -266,10 +195,14 @@ std::string choose_chat(const std::string &username) {
     if (chats.empty()) {
         return chat_id;
     }
+    std::vector<std::string> chats_names;
+    for (auto& c : chats) {
+        chats_names.push_back(c.chat_name);
+    }
     curs_set(0);
     keypad(stdscr, true);
 
-    int idx = choose_one_of_list_chat(max_rows, max_cols, chats, CHOOSE_CHAT);
+    int idx = choose_one_of_list(max_rows, max_cols, chats_names);
     if (idx == ESC) {
         endwin();
         exit(0);
@@ -291,8 +224,11 @@ std::string open_users_list(const std::string &client_username) {
     std::string chat_id = "";
 
     std::vector<User> users = connector.GetAllUsers();
-
-    int idx = choose_one_of_list_user(max_rows, max_cols, users, NEW_CHAT);
+    std::vector<std::string> users_names;
+    for (auto& u : users) {
+        users_names.push_back(u.name);
+    }
+    int idx = choose_one_of_list(max_rows, max_cols, users_names);
     if (idx == ESC) {
         endwin();
         exit(0);
@@ -307,10 +243,10 @@ std::string open_users_list(const std::string &client_username) {
             return chat_id;
         }
 
-        std::string chat_name = chosen_username + " CHAT";
+        std::string chat_name = users[idx].name + " CHAT";
         chat_id = connector.CreateChat(client_username, chosen_username, chat_name);
         if (chat_id != "") {
-            send_system_message("Chat '" + chat_name + "' was created! (chat_id " + chat_id + ")");
+            send_system_message("Chat with" + chat_name + " was created!");
         } else {
             send_system_message("Oops, something went wrong!");
         }
@@ -342,8 +278,8 @@ void index() {
             exit(0);
         }
         username = field_values[1];
-
-        send_system_message("Welcome, " + connector.GetUser(username).username + "!");
+        // TODO имя, а не username
+        send_system_message("Welcome, " + connector.GetUser(username).name + "!");
     } else if (choice == LOGIN) {
         std::vector<std::string> field_values = login();
         if (field_values.empty()) {
@@ -351,8 +287,8 @@ void index() {
             exit(0);
         }
         username = field_values[0];
-
-        send_system_message("Hello, " + connector.GetUser(username).username + "!");
+        // TODO имя, а не username
+        send_system_message("Hello, " + connector.GetUser(username).name + "!");
     } else {
         endwin();
         exit(1);
@@ -406,7 +342,7 @@ void display_all_messages(const std::string& chat_id) {
     int num_rows = std::min(max_num_rows, 2 * static_cast<int>(list_to_show.size()));
     int first_row = std::max(0, static_cast<int>(list_to_show.size()) - num_rows / 2);
 
-    // Display all messages on screen
+    // Вывести все сообщения на экран
     for (int i = first_row; i < std::min(first_row + num_rows / 2, static_cast<int>(list_to_show.size())); ++i) {
         display_message(list_to_show[i]);
     }
@@ -444,9 +380,9 @@ void send_messages(const std::string& chat_id, const User user, std::mutex& m) {
 
                 if (!message.empty()) {
                     Message new_message {
-                        .sender_username = user.username,
-                        .chat_id = chat_id,
-                        .content = message,
+                            .sender_username = user.username,
+                            .chat_id = chat_id,
+                            .content = message,
                     };
                     connector.AddMessage(new_message);
                     display_all_messages(chat_id); // TODO эта штука не будет скорее всего нужна, когда прикрутим сервер
@@ -470,7 +406,7 @@ void start_chat(const std::string& chat_id, const std::string& username) {
     send_thread.join();
 }
 
-void home(const std::string &username) { // TODO важно!
+void home(const std::string &username) {
     clear();
     std::vector<std::string> home_buttons = {"New chat", "Open chat", "Delete chat"};
     int choice = NEW + choose_system_call(home_buttons);
@@ -524,9 +460,9 @@ std::vector<std::string> signup() {
     std::vector<std::string> field_values = registration_forms(pixel_diff, button, fields);
 
     User new_user {
-        .name = field_values[0],
-        .username = field_values[1],
-        .password_hash = field_values[2],
+            .name = field_values[0],
+            .username = field_values[1],
+            .password_hash = field_values[2],
     };
     connector.AddUser(new_user);
     return field_values;
@@ -537,3 +473,4 @@ int main() {
     index();
     endwin();
 }
+
