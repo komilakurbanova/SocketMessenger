@@ -20,7 +20,6 @@
 #include "../server_connector/server_connector.h"
 
 const std::string connection_string = "dbname=messenger_db user=admin password=root host=db";
-LocalDBManager db; // TODO delete
 
 void index();
 std::vector<std::string> signup();

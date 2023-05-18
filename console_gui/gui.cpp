@@ -414,30 +414,23 @@ void display_all_messages(const std::string& chat_id) {
 }
 
 void display_new_messages(const std::string& chat_id, std::mutex& m) {
-    // while (true) {
-    //     // TODO получаем какое-то сообщение от сервера
-    //     if (abool) {
-    //         m.lock();
-
-    //         db.addMessage(chat_id, new_msg.sender_username, new_msg.content); // TODO избавиться от new_msg
-
-    //         display_all_messages(chat_id);
-    //         abool = false;
-
-    //         m.unlock();
-    //     }
-        // TODO: add listening for new messages from server
-    // }
+    while (true) {
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        m.lock();
+        display_all_messages(chat_id);
+        m.unlock();
+        // connector.GetChatMessages(chat_id);
+    }
 }
 
-void send_messages(const std::string& chat_id, const std::string& username, std::mutex& m) {
+void send_messages(const std::string& chat_id, const User user, std::mutex& m) {
     while (true) {
         switch (getch()) {
             case KEY_ESC:
                 endwin();
                 exit(0);
             case KEY_BACK:
-                home(username);
+                home(user.username);
                 break;
             case '\n':
             case KEY_ENTER:
@@ -447,18 +440,16 @@ void send_messages(const std::string& chat_id, const std::string& username, std:
                 message = show_input_field();
 
                 if (!message.empty()) {
-                    Message new_message;
-                    new_message.sender_username = db.getName(username);
-                    new_message.chat_id = chat_id;
-                    new_message.content = message;
-
-                    //TODO send message to the server
-                    db.addMessage(chat_id, username, message);
-                    display_all_messages(chat_id); // TODO эта штука не будет скорее всего нужна, когда прикрутим сервер
+                    Message new_message {
+                        .sender_username = user.username,
+                        .chat_id = chat_id,
+                        .content = message,
+                    };
+                    connector.AddMessage(new_message);
+                    // display_all_messages(chat_id); // TODO эта штука не будет скорее всего нужна, когда прикрутим сервер
                 }
 
                 m.unlock();
-
                 break;
         }
     }
@@ -470,12 +461,7 @@ void start_chat(const std::string& chat_id, const std::string& username) {
     display_all_messages(chat_id);
 
     std::thread display_thread(display_new_messages, std::ref(chat_id), std::ref(m));
-    std::thread send_thread(send_messages, std::ref(chat_id), std::ref(username), std::ref(m));
-
-    // for (size_t i = 0; i < 10; ++i) {
-    //     std::this_thread::sleep_for(std::chrono::seconds(5));
-    //     abool = true;
-    // }
+    std::thread send_thread(send_messages, std::ref(chat_id), connector.GetUser(username), std::ref(m));
 
     display_thread.join();
     send_thread.join();
@@ -504,7 +490,7 @@ void home(const std::string &username) { // TODO важно!
         return;
     }
     if (choice == DELETE) {
-        db.removeChat(chat_id); // TODO
+        // db.removeChat(chat_id); // TODO
         home(username);
         return;
     }

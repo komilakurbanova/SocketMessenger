@@ -14,9 +14,7 @@ std::mutex ServerMutex;
 void ListenAndServe(boost::asio::ip::tcp::socket socket) {
     while (true) {
         ProtocolPacket pp;
-        // std::cout << "abobka" << std::endl;
         MainCommunicator.ReceiveAndDeserializePacket(pp, socket);
-        // std::cout << "abobka" << std::endl;
         ProtocolPacket answer;
         switch (pp.operationType) {
             case OperationType::ADD_USER:

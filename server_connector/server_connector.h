@@ -91,6 +91,13 @@ public:
         return recv_packet.getAllChats();
     }
 
+    void AddMessage(const Message& message) {
+        ProtocolPacket packet;
+        packet.operationType = OperationType::ADD_MESSAGE;
+        packet.operationData.message = message;
+        communicator_.SerializeAndSendPacket(packet, socket_);
+    }
+
 private:
     boost::asio::ip::tcp::socket socket_;
     Communicator communicator_;
