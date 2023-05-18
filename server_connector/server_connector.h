@@ -73,6 +73,7 @@ public:
     std::vector<Message> GetChatMessages(const std::string& chat_id) {
         ProtocolPacket packet;
         packet.operationType = OperationType::GET_CHAT_MESSAGES;
+        packet.operationData.chat = Chat{.chat_id = chat_id};
         communicator_.SerializeAndSendPacket(packet, socket_);
 
         ProtocolPacket recv_packet;

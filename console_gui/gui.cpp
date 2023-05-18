@@ -413,24 +413,27 @@ void display_all_messages(const std::string& chat_id) {
     refresh();
 }
 
+std::atomic<bool> stop_threads = false;
+
 void display_new_messages(const std::string& chat_id, std::mutex& m) {
-    while (true) {
+    while (!stop_threads) {
         std::this_thread::sleep_for(std::chrono::seconds(1));
         m.lock();
         display_all_messages(chat_id);
         m.unlock();
-        // connector.GetChatMessages(chat_id);
     }
 }
 
 void send_messages(const std::string& chat_id, const User user, std::mutex& m) {
-    while (true) {
+    while (!stop_threads) {
         switch (getch()) {
             case KEY_ESC:
                 endwin();
-                exit(0);
+                stop_threads = true;
+                break;
             case KEY_BACK:
                 home(user.username);
+                stop_threads = true;
                 break;
             case '\n':
             case KEY_ENTER:
@@ -446,7 +449,7 @@ void send_messages(const std::string& chat_id, const User user, std::mutex& m) {
                         .content = message,
                     };
                     connector.AddMessage(new_message);
-                    // display_all_messages(chat_id); // TODO эта штука не будет скорее всего нужна, когда прикрутим сервер
+                    display_all_messages(chat_id); // TODO эта штука не будет скорее всего нужна, когда прикрутим сервер
                 }
 
                 m.unlock();
