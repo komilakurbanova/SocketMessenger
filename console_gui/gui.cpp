@@ -428,7 +428,7 @@ void home(const std::string &username) {
         return;
     }
     if (choice == DELETE) {
-        // db.removeChat(chat_id); // TODO
+        connector.RemoveChat(chat_id); // TODO
         home(username);
         return;
     }

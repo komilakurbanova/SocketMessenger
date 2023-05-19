@@ -17,6 +17,7 @@
 
 > Компиляция кринж-клиента: `g++ -std=c++17 server/test/test1.cpp db_manager/db_manager.cpp protocol/data_protocol.cpp -o client_bin -lboost_serialization -lboost_system -lboost_thread -lboost_chrono`
 
+- TODO выпилить кринж клиента
 - Кринж-клиент просто добавляет argv как клиента, нужен для дебага
 
 > Компиляция клиента (gui): `g++ -std=c++17 console_gui/gui.cpp db_manager/db_manager.cpp protocol/data_protocol.cpp -o gui_bin -lboost_serialization -lboost_system -lboost_thread -lboost_chrono -lncurses`

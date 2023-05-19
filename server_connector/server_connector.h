@@ -99,6 +99,13 @@ public:
         communicator_.SerializeAndSendPacket(packet, socket_);
     }
 
+    void RemoveChat(const std::string& chat_id) {
+        ProtocolPacket packet;
+        packet.operationType = OperationType::REMOVE_CHAT;
+        packet.operationData.chat = {.chat_id = chat_id};
+        communicator_.SerializeAndSendPacket(packet, socket_);
+    }
+
 private:
     boost::asio::ip::tcp::socket socket_;
     Communicator communicator_;
