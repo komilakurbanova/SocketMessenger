@@ -33,6 +33,7 @@ int choose_one_of_list(int max_rows, int max_cols, std::vector<std::string>& lis
                 endwin();
                 exit(0);
             case KEY_BACK:
+            case KEY_BACKSPACE:
                 return BACK;
             case KEY_UP:
                 if (choice > 0) // указатель вверх
@@ -67,7 +68,7 @@ int choose_system_call(const std::vector<std::string> &buttons) {
             } else {
                 mvwaddch(win, 4 + i, 5, ' ');
             }
-            mvwprintw(win, 4 + i, 7, buttons[i].c_str());
+            mvwprintw(win, 4 + i, 7, "%s", buttons[i].c_str());
         }
         refresh();
         wrefresh(win);
@@ -167,7 +168,7 @@ std::vector<std::string> registration_forms(int pixel_diff,
     // Создаем кнопку
     WINDOW *button_win = newwin(3, 15, max_rows / 2 + pixel_diff, max_cols / 2 - 2);
     box(button_win, 0, 0);
-    mvwprintw(button_win, 1, 4, button.c_str());
+    mvwprintw(button_win, 1, 4, "%s", button.c_str());
     wrefresh(button_win);
     // Ожидаем, пока пользователь нажмет на кнопку
     int ch = getch();
@@ -239,14 +240,13 @@ std::string open_users_list(const std::string &client_username) {
         std::string chosen_username = users[idx].username;
         if (chosen_username == client_username) {
             send_system_message("Choose someone else, you cannot create a chat with yourself");
-            open_users_list(client_username);
-            return chat_id;
+            return open_users_list(client_username);;
         }
 
-        std::string chat_name = users[idx].name + " CHAT";
+        std::string chat_name = client_username + " and " + users[idx].name + " CHAT";
         chat_id = connector.CreateChat(client_username, chosen_username, chat_name);
         if (chat_id != "") {
-            send_system_message("Chat with" + chat_name + " was created!");
+            send_system_message("Chat with " + chat_name + " was created!");
         } else {
             send_system_message("Oops, something went wrong!");
         }
@@ -278,7 +278,6 @@ void index() {
             exit(0);
         }
         username = field_values[1];
-        // TODO имя, а не username
         send_system_message("Welcome, " + connector.GetUser(username).name + "!");
     } else if (choice == LOGIN) {
         std::vector<std::string> field_values = login();
@@ -287,7 +286,6 @@ void index() {
             exit(0);
         }
         username = field_values[0];
-        // TODO имя, а не username
         send_system_message("Hello, " + connector.GetUser(username).name + "!");
     } else {
         endwin();
@@ -368,6 +366,7 @@ void send_messages(const std::string& chat_id, const User user, std::mutex& m) {
                 stop_threads = true;
                 break;
             case KEY_BACK:
+            case KEY_BACKSPACE:
                 home(user.username);
                 stop_threads = true;
                 break;
@@ -412,7 +411,7 @@ void home(const std::string &username) {
     int choice = NEW + choose_system_call(home_buttons);
 
     std::string chat_id = "";
-    if (choice == NEW + BACK) {
+    if (choice == BACK) {
         index();
         return;
     } else if (choice == NEW) {
@@ -460,11 +459,12 @@ std::vector<std::string> signup() {
     std::vector<std::string> field_values = registration_forms(pixel_diff, button, fields);
 
     User new_user {
-            .name = field_values[0],
             .username = field_values[1],
+            .name = field_values[0],
             .password_hash = field_values[2],
     };
     connector.AddUser(new_user);
+    // TODO проверка, что пользователь добавился и что нет уже такого username!!!!
     return field_values;
 }
 
