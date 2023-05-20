@@ -15,7 +15,9 @@
 					"source" : ".",
 					"targetIndexes" : 
 					[
-						0
+						0,
+						1,
+						2
 					]
 				}
 			],
@@ -27,10 +29,12 @@
 					[
 						0
 					],
-					"name" : "SocketMessenger",
+					"name" : "MyProject",
 					"targetIndexes" : 
 					[
-						0
+						0,
+						1,
+						2
 					]
 				}
 			],
@@ -38,9 +42,23 @@
 			[
 				{
 					"directoryIndex" : 0,
-					"id" : "SocketMessenger::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-SocketMessenger-Debug-658c252c0663eae4d87e.json",
-					"name" : "SocketMessenger",
+					"id" : "DBManager::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-DBManager-Debug-e5f11ec0b3d5153b2db0.json",
+					"name" : "DBManager",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "default_target::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-default_target-Debug-75d3435741dfd6fe364b.json",
+					"name" : "default_target",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "test_db_manager::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-test_db_manager-Debug-b5b6006ac9b7d6cd5a66.json",
+					"name" : "test_db_manager",
 					"projectIndex" : 0
 				}
 			]
