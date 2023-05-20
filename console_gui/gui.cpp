@@ -2,6 +2,8 @@
 #include <exception>
 #include <vector>
 
+#include <fstream>
+
 boost::asio::io_context io_context;
 ServerConnector connector(&io_context);
 
@@ -347,28 +349,31 @@ void display_all_messages(const std::string& chat_id) {
     refresh();
 }
 
-std::atomic<bool> stop_threads = false;
+std::atomic<bool> stop_display_thread = false;
 
 void display_new_messages(const std::string& chat_id, std::mutex& m) {
-    while (!stop_threads) {
+    while (!stop_display_thread) {
         std::this_thread::sleep_for(std::chrono::seconds(1));
         m.lock();
-        display_all_messages(chat_id);
+        if (!stop_display_thread) {
+            display_all_messages(chat_id);
+        }
         m.unlock();
     }
+    stop_display_thread = false;
 }
 
 void send_messages(const std::string& chat_id, const User user, std::mutex& m) {
-    while (!stop_threads) {
+    while (!stop_display_thread) {
         switch (getch()) {
             case KEY_ESC:
+                stop_display_thread = true;
                 endwin();
-                stop_threads = true;
                 break;
             case KEY_BACK:
             case KEY_BACKSPACE:
+                stop_display_thread = true;
                 home(user.username);
-                stop_threads = true;
                 break;
             case '\n':
             case KEY_ENTER:
