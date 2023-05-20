@@ -2,29 +2,17 @@
 
 ## Необходимые библиотеки
 
-- `brew install wget`
-- `wget https://boostorg.jfrog.io/artifactory/main/release/1.82.0/source/boost_1_82_0.tar.gz`
-- `brew install boost`
+`apt-get install libncurses5-dev libncursesw5-dev`
 
-Если после этих команд компиляция клиента не сработает, попробуйте
+`sudo apt-get install libboost-all-dev`
 
-- `tar -xzvf boost_1_82_0.tar.gz`
-- `cd boost_1_82_0/`
-- `./bootstrap.sh`
-- `./b2 install`
-- `cd ..`
-- `rm -r boost_1_82_0/ boost_1_82_0.tar.gz`
+> Компиляция клиента (GUI)
 
-> Компиляция кринж-клиента: `g++ -std=c++17 server/test/test1.cpp db_manager/db_manager.cpp protocol/data_protocol.cpp -o client_bin -lboost_serialization -lboost_system -lboost_thread -lboost_chrono`
+`g++ -std=c++17 console_gui/gui.cpp db_manager/db_manager.cpp protocol/data_protocol.cpp -o gui_bin -lboost_serialization -lboost_system -lboost_thread -lboost_chrono -lncurses`
 
-- TODO выпилить кринж клиента
-- Кринж-клиент просто добавляет argv как клиента, нужен для дебага
-
-> Компиляция клиента (gui): `g++ -std=c++17 console_gui/gui.cpp db_manager/db_manager.cpp protocol/data_protocol.cpp -o gui_bin -lboost_serialization -lboost_system -lboost_thread -lboost_chrono -lncurses`
-
-- Клиент выступает в том числе и за gui
-
-> Компиляция сервера: `g++ -std=c++17 server/server_new.cpp db_manager/db_manager.cpp protocol/data_protocol.cpp -o server_bin -lboost_serialization`
+> Компиляция сервера
+ 
+`g++ -std=c++17 server/server_new.cpp db_manager/db_manager.cpp protocol/data_protocol.cpp -o server_bin -lboost_serialization`
 
 ---
 
@@ -103,3 +91,11 @@ PostgreSQL обладает высоким уровнем защиты данн�
 - [Кроссплатформенный многопоточный TCP/IP сервер на C++](https://habr.com/ru/post/503432)
 
 - [Асинхронный ввод-вывод средствами POSIX](https://ps-group.github.io/os/nonblocking_io_posix)
+
+--- 
+
+## Авторы
+
+- [Комила Курбанова](https://t.me/kvrmalin)
+- [Владислав Анохов](https://t.me/pelanglene)
+- [Шевердов Никита](https://t.me/pchelka_zh)

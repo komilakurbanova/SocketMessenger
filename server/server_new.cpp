@@ -18,8 +18,21 @@ void ListenAndServe(boost::asio::ip::tcp::socket socket) {
         ProtocolPacket answer;
         switch (pp.operationType) {
             case OperationType::ADD_USER:
-                std::cout << "[INFO] Added new user with username " << pp.getUser().username << std::endl;
-                LocalDB.addUser(pp.getUser().username, pp.getUser().name, pp.getUser().password_hash, pp.getUser().password_salt);
+                ServerMutex.lock();
+                if (LocalDB.isUserAdded(pp.getUser().username)) {
+                    std::cout << "[INFO] User was already added " << pp.getUser().username << std::endl;
+                    answer.operationData.user = User();
+                } else {
+                    std::cout << "[INFO] Added new user with username " << pp.getUser().username << std::endl;
+                    LocalDB.addUser(pp.getUser().username,
+                                    pp.getUser().name,
+                                    pp.getUser().password_hash,
+                                    pp.getUser().password_salt);
+                    answer.operationData.user = LocalDB.getUser(pp.getUser().username);
+                }
+
+                MainCommunicator.SerializeAndSendPacket(answer, socket);
+                ServerMutex.unlock();
                 break;
             case OperationType::REMOVE_USER:
                 LocalDB.removeUser(pp.getUser().username);

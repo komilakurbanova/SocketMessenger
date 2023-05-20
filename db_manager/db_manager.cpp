@@ -314,3 +314,7 @@ Chat LocalDBManager::getChat(const std::string& chat_name) {
     }
     return {};
 }
+
+bool LocalDBManager::isUserAdded(const std::string& username) {
+    return users_.count(username) != 0;
+}

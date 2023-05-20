@@ -11,14 +11,23 @@
 class ServerConnector {
 public:
     ServerConnector(boost::asio::io_context* io_context, std::string ip = "127.0.0.1", int64_t port = 12345) : socket_(*io_context) {
-        socket_.connect(boost::asio::ip::tcp::endpoint(boost::asio::ip::address::from_string(ip), port));
+        try {
+            socket_.connect(boost::asio::ip::tcp::endpoint(boost::asio::ip::address::from_string(ip), port));
+        } catch (...) {
+            std::cerr << "Try to run server first" << std::endl;
+            exit(EXIT_FAILURE);
+        }
     };
 
-    void AddUser(const User& user) {
+    bool AddUser(const User& user) {
         ProtocolPacket packet;
         packet.operationType = OperationType::ADD_USER;
         packet.operationData.user = user;
         communicator_.SerializeAndSendPacket(packet, socket_);
+
+        ProtocolPacket recv_packet;
+        communicator_.ReceiveAndDeserializePacket(recv_packet, socket_);
+        return recv_packet.getUser().username != "";
     }
 
     std::vector<User> GetAllUsers() {

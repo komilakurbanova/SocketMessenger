@@ -35,6 +35,7 @@ public:
 
     virtual std::vector<User> getAllUsers() const = 0;
     virtual Chat getChat(const std::string& chat_name) = 0;
+    virtual bool isUserAdded(const std::string& username) = 0;
 };
 
 // class DBManager : public IDBManager {
@@ -79,6 +80,7 @@ public:
     std::vector<User> getAllUsers() const override;
     User getUser(const std::string& username) override;
     Chat getChat(const std::string& chat_name) override;
+    bool isUserAdded(const std::string& username) override;
 
 protected:
     int next_chat_id_ = 1;

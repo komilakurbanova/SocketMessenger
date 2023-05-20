@@ -6,7 +6,6 @@
 
 boost::asio::io_context io_context;
 ServerConnector connector(&io_context);
-
 // выбор одного варианта из списка, вернет либо индекс выбранного, либо флаги возврата и выхода
 
 int choose_one_of_list(int max_rows, int max_cols, std::vector<std::string>& list_to_show) {
@@ -468,8 +467,10 @@ std::vector<std::string> signup() {
             .name = field_values[0],
             .password_hash = field_values[2],
     };
-    connector.AddUser(new_user);
-    // TODO проверка, что пользователь добавился и что нет уже такого username!!!!
+    if (!connector.AddUser(new_user)) {
+        send_system_message("This user already exists. Try another one");
+        return signup();
+    }
     return field_values;
 }
 
