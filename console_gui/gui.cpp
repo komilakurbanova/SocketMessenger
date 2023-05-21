@@ -446,9 +446,14 @@ std::vector<std::string> login() {
     std::vector<std::string> field_values = registration_forms(pixel_diff, button, fields);
 
     const std::string username = field_values[0];
-    // TODO пока логин происходит только
-    if (connector.GetUser(username).username.empty()) {
+    auto user = connector.GetUser(username);
+    
+    if (user.username.empty()) {
         send_system_message("This user does not exist");
+        login();
+    }
+    if (user.password_hash != field_values[1]) {
+        send_system_message("Wrong password");
         login();
     }
     return field_values;
@@ -466,7 +471,7 @@ std::vector<std::string> signup() {
             .password_hash = field_values[2],
     };
     if (!connector.AddUser(new_user)) {
-        send_system_message("This user already exists. Try another one");
+        send_system_message("This user already exists. Try another username");
         return signup();
     }
     return field_values;
