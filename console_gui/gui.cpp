@@ -210,7 +210,7 @@ std::string choose_chat(const std::string &username) {
         exit(0);
     } else if (idx == BACK) {
         endwin();
-        index();
+        home(username);
         return chat_id;
     }
     chat_id = chats[idx].chat_id;
@@ -450,11 +450,11 @@ std::vector<std::string> login() {
     
     if (user.username.empty()) {
         send_system_message("This user does not exist");
-        login();
+        return login();
     }
     if (user.password_hash != field_values[1]) {
         send_system_message("Wrong password");
-        login();
+        return login();
     }
     return field_values;
 }
