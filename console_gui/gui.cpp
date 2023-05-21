@@ -78,7 +78,7 @@ int choose_system_call(const std::vector<std::string> &buttons) {
             delwin(win);
             endwin();
             exit(0);
-        } else if (ch == KEY_BACK) {
+        } else if (ch == KEY_BACK || ch == KEY_BACKSPACE) {
             delwin(win);
             return BACK;
         } else if (ch == KEY_UP && choice > 0) {
@@ -177,7 +177,7 @@ std::vector<std::string> registration_forms(int pixel_diff,
         delwin(button_win);
         endwin();
         exit(0);
-    } else if (ch == KEY_BACK) {
+    } else if (ch == KEY_BACK || ch == KEY_BACKSPACE) {
         index();
     }
     while (ch != KEY_ENTER && ch != '\n') {
@@ -244,10 +244,10 @@ std::string open_users_list(const std::string &client_username) {
             return open_users_list(client_username);;
         }
 
-        std::string chat_name = client_username + " and " + users[idx].name + " CHAT";
+        std::string chat_name = connector.GetUser(client_username).name + " and " + users[idx].name + " CHAT";
         chat_id = connector.CreateChat(client_username, chosen_username, chat_name);
         if (chat_id != "") {
-            send_system_message("Chat with " + chat_name + " was created!");
+            send_system_message("Chat '" + chat_name + "' was created!");
         } else {
             send_system_message("Oops, something went wrong!");
         }
@@ -296,7 +296,6 @@ void index() {
 }
 
 std::string show_input_field() {
-    clear();
     int max_rows, max_cols;
     getmaxyx(stdscr, max_rows, max_cols);
     int field_y = max_rows - 2;
@@ -325,7 +324,7 @@ std::string show_input_field() {
 void display_message(Message& message) {
     addch(' ');
     attron(A_BOLD);
-    printw("%s\n", message.sender_username.c_str());
+    printw("%s\n", connector.GetUser(message.sender_username).name.c_str());
     attroff(A_BOLD);
     printw("%s\n", message.content.c_str());
 }
@@ -334,7 +333,6 @@ void display_all_messages(const std::string& chat_id) {
     int max_rows, max_cols;
     getmaxyx(stdscr, max_rows, max_cols);
     clear();
-    refresh();
     const int max_num_rows = MAX_ROWS;
     std::vector<Message> list_to_show = connector.GetChatMessages(chat_id);
 
@@ -388,7 +386,6 @@ void send_messages(const std::string& chat_id, const User user, std::mutex& m) {
                             .content = message,
                     };
                     connector.AddMessage(new_message);
-                    display_all_messages(chat_id); // TODO эта штука не будет скорее всего нужна, когда прикрутим сервер
                 }
 
                 m.unlock();
@@ -411,6 +408,7 @@ void start_chat(const std::string& chat_id, const std::string& username) {
 
 void home(const std::string &username) {
     clear();
+    refresh();
     std::vector<std::string> home_buttons = {"New chat", "Open chat", "Delete chat"};
     int choice = NEW + choose_system_call(home_buttons);
 
@@ -479,4 +477,3 @@ int main() {
     index();
     endwin();
 }
-
